@@ -1,103 +1,212 @@
-import { AnimatePresence, LayoutGroup, motion, useScroll, useTransform } from 'motion/react'
-import { ChevronRight } from 'lucide-react'
-import { useMemo, useRef, useState } from 'react'
-import monogram from '../assets/img/monogramme-blanc.webp'
-import { gallery, galleryFilters } from '../content'
+import { AnimatePresence, LayoutGroup, motion, useMotionValueEvent, useScroll, useTransform } from 'motion/react'
+import { ChevronRight, Play } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { gallery, galleryBackground, galleryFilters, type Video } from '../content'
+import { useStepZone } from '../lib/scroll'
+import { docTop } from '../lib/steps'
 import { Lightbox } from './Lightbox'
 
 const ease = [0.22, 1, 0.36, 1] as const
 
-// Particules dorées (positions fixes pour éviter tout saut entre rendus)
-const bokeh = Array.from({ length: 46 }, (_, i) => {
-  const r = (n: number) => ((Math.sin(i * 12.9898 + n * 78.233) * 43758.5453) % 1 + 1) % 1
-  return { left: r(1) * 100, top: r(2) * 100, size: 2 + r(3) * 9, delay: r(4) * 4, blur: r(5) > 0.65 }
+// Paillettes dorées (positions fixes pour éviter tout saut entre rendus)
+const bokeh = Array.from({ length: 40 }, (_, i) => {
+  const r = (n: number) => (((Math.sin(i * 12.9898 + n * 78.233) * 43758.5453) % 1) + 1) % 1
+  return { left: r(1) * 100, top: r(2) * 100, size: 2 + r(3) * 8, delay: r(4) * 4, blur: r(5) > 0.65 }
 })
 
+const counts = gallery.reduce<Record<string, number>>((acc, g) => ({ ...acc, [g.category]: (acc[g.category] ?? 0) + 1 }), {})
+
+/** Vignette vidéo : affiche fixe, aperçu animé au survol (ou en continu pour la grande). */
+function Tile({ item, big, onOpen, autoPlay }: { item: Video; big: boolean; onOpen: () => void; autoPlay: boolean }) {
+  const ref = useRef<HTMLVideoElement>(null)
+  const [hover, setHover] = useState(false)
+  const playing = autoPlay || hover
+
+  useEffect(() => {
+    const v = ref.current
+    if (!v) return
+    if (playing) v.play().catch(() => {})
+    else v.pause()
+  }, [playing])
+
+  return (
+    <button
+      onClick={onOpen}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onFocus={() => setHover(true)}
+      onBlur={() => setHover(false)}
+      className="group relative h-full w-full overflow-hidden rounded-[1.4rem] text-left lg:rounded-[1.8rem]"
+      aria-label={`Lire la vidéo : ${item.titre}`}
+    >
+      <img
+        src={big ? item.affiche : item.afficheSmall}
+        alt=""
+        loading="lazy"
+        className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.2s] ease-(--ease-lux) group-hover:scale-110"
+      />
+      <video
+        ref={ref}
+        src={item.apercu}
+        muted
+        loop
+        playsInline
+        preload="none"
+        className={`absolute inset-0 h-full w-full object-cover transition-[opacity,transform] duration-700 ease-(--ease-lux) group-hover:scale-110 ${
+          playing ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
+      <span className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent opacity-80 transition-opacity duration-500 group-hover:opacity-100" />
+      <span className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-black/35 text-white opacity-0 backdrop-blur-sm transition duration-500 group-hover:opacity-100 lg:h-11 lg:w-11">
+        <Play className="ml-0.5 h-4 w-4 fill-current" />
+      </span>
+      <span
+        className={`absolute bottom-0 left-0 rounded-[0_999px_999px_0] bg-gradient-to-r from-black/30 via-black/15 to-black/0 text-white backdrop-blur-md backdrop-saturate-150 transition-transform duration-500 ease-(--ease-lux) group-hover:-translate-y-1 ${
+          big ? 'px-[7%] pb-[5%] pt-[3.5%] lg:min-w-[55%]' : 'px-4 pb-2.5 pt-2 lg:min-w-[62%]'
+        }`}
+      >
+        <span className={`block font-bold tracking-[0.1em] ${big ? 'text-[clamp(1.1rem,2vw,1.9rem)]' : 'text-[clamp(0.78rem,1.1vw,1.05rem)]'}`}>
+          {item.category}
+        </span>
+        <span className={`flex items-center gap-1 tracking-[0.08em] ${big ? 'text-[clamp(0.75rem,1.15vw,1.1rem)]' : 'text-[clamp(0.62rem,0.85vw,0.8rem)]'}`}>
+          {counts[item.category]} VIDÉOS
+          <ChevronRight className="h-[1.1em] w-[1.1em] transition-transform duration-300 group-hover:translate-x-1" />
+        </span>
+      </span>
+    </button>
+  )
+}
+
+/**
+ * Galerie épinglée en deux temps :
+ * 1er cran : le contenu s'efface et laisse le fond (logo doré animé) ;
+ * 2e cran : on passe à la section suivante.
+ */
 export function Gallery() {
   const ref = useRef<HTMLElement>(null)
+  const bgRef = useRef<HTMLVideoElement>(null)
   const [filter, setFilter] = useState<(typeof galleryFilters)[number]>('Tous')
   const [lightbox, setLightbox] = useState<number | null>(null)
+  const [inView, setInView] = useState(false)
+
+  useStepZone({
+    id: 'galerie',
+    stops: () => {
+      const el = ref.current
+      if (!el) return []
+      const top = docTop(el)
+      return [top, top + el.offsetHeight - window.innerHeight]
+    },
+  })
 
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] })
-  // 1er temps : le contenu s'efface. 2e temps : l'image de fond seule, puis la section se libère.
-  const contentOpacity = useTransform(scrollYProgress, [0.1, 0.42], [1, 0])
-  const contentY = useTransform(scrollYProgress, [0.1, 0.42], [0, -70])
-  const contentBlur = useTransform(scrollYProgress, [0.1, 0.42], ['blur(0px)', 'blur(14px)'])
-  const contentEvents = useTransform(scrollYProgress, (p) => (p > 0.3 ? 'none' : 'auto'))
-  const bgScale = useTransform(scrollYProgress, [0, 0.5, 1], [1.18, 1, 0.96])
-  const bgOpacity = useTransform(scrollYProgress, [0, 0.42], [0.35, 1])
-  const glow = useTransform(scrollYProgress, [0.1, 0.5], [0.2, 0.75])
+  const { scrollYProgress: approach } = useScroll({ target: ref, offset: ['start end', 'start start'] })
+  const radius = useTransform(approach, [0.7, 1], ['9rem', '0rem'])
+  const contentOpacity = useTransform(scrollYProgress, [0.02, 0.55], [1, 0])
+  const contentY = useTransform(scrollYProgress, [0.02, 0.55], [0, -60])
+  const contentBlur = useTransform(scrollYProgress, [0.02, 0.55], ['blur(0px)', 'blur(12px)'])
+  const contentEvents = useTransform(scrollYProgress, (p) => (p > 0.35 ? 'none' : 'auto'))
+  const veil = useTransform(scrollYProgress, [0.05, 0.7], [0.74, 0])
+  const sparkle = useTransform(scrollYProgress, [0.05, 0.7], [1, 0.25])
+  const bgScale = useTransform(scrollYProgress, [0, 1], [1.08, 1])
+
+  // Le fond doré se rejoue à chaque arrivée sur le 2e temps, puis se fige sur le logo
+  const revealed = useRef(false)
+  useMotionValueEvent(scrollYProgress, 'change', (p) => {
+    const v = bgRef.current
+    if (!v) return
+    if (p > 0.55 && !revealed.current) {
+      revealed.current = true
+      v.currentTime = 0
+      v.play().catch(() => {})
+    } else if (p < 0.2 && revealed.current) {
+      revealed.current = false
+      v.pause()
+    }
+  })
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const io = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), { threshold: 0.15 })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
 
   const items = useMemo(() => (filter === 'Tous' ? gallery : gallery.filter((g) => g.category === filter)), [filter])
-  const counts = useMemo(
-    () => gallery.reduce<Record<string, number>>((acc, g) => ({ ...acc, [g.category]: (acc[g.category] ?? 0) + 1 }), {}),
-    [],
-  )
   const visible = items.slice(0, 5)
 
   return (
-    <section id="galerie" ref={ref} aria-labelledby="galerie-titre" className="relative bg-cream" style={{ height: '300svh' }}>
-      <div className="sticky top-0 h-[100svh] overflow-hidden rounded-t-[3rem] bg-black sm:rounded-t-[5rem]">
-        {/* Image de fond */}
+    <section id="galerie" ref={ref} data-theme="dark" aria-labelledby="galerie-titre" className="relative bg-cream" style={{ height: '200svh' }}>
+      <motion.div
+        style={{ borderTopLeftRadius: radius, borderTopRightRadius: radius }}
+        className="sticky top-0 h-[100svh] overflow-hidden bg-black"
+      >
+        {/* Fond : générique doré des vidéos officielles */}
         <motion.div aria-hidden style={{ scale: bgScale }} className="absolute inset-0">
-          <motion.div
-            style={{ opacity: glow }}
-            className="absolute left-1/2 top-1/2 h-[80vmin] w-[80vmin] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgb(225_189_120/0.45),transparent_65%)]"
+          <video
+            ref={bgRef}
+            src={galleryBackground.src}
+            poster={galleryBackground.affiche}
+            muted
+            playsInline
+            preload="auto"
+            onEnded={(e) => e.currentTarget.pause()}
+            className="absolute inset-0 h-full w-full scale-[1.55] object-contain md:scale-100 md:object-cover"
           />
-          <motion.img
-            src={monogram}
-            alt=""
-            style={{ opacity: bgOpacity }}
-            className="absolute left-1/2 top-1/2 w-[min(78vmin,760px)] -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_0_40px_rgb(225_189_120/0.55)]"
-          />
-          {bokeh.map((b, i) => (
-            <span
-              key={i}
-              className="absolute animate-twinkle rounded-full bg-gold-300"
-              style={{
-                left: `${b.left}%`,
-                top: `${b.top}%`,
-                width: b.size,
-                height: b.size,
-                animationDelay: `${b.delay}s`,
-                filter: b.blur ? 'blur(2px)' : undefined,
-                boxShadow: '0 0 12px rgb(225 189 120 / 0.8)',
-              }}
-            />
-          ))}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgb(0_0_0/0.75)_100%)]" />
+          <motion.div style={{ opacity: veil }} className="absolute inset-0 bg-black" />
+          <motion.div style={{ opacity: sparkle }} className="absolute inset-0">
+            {bokeh.map((b, i) => (
+              <span
+                key={i}
+                className="absolute animate-twinkle rounded-full bg-gold-300"
+                style={{
+                  left: `${b.left}%`,
+                  top: `${b.top}%`,
+                  width: b.size,
+                  height: b.size,
+                  animationDelay: `${b.delay}s`,
+                  filter: b.blur ? 'blur(2px)' : undefined,
+                  boxShadow: '0 0 12px rgb(224 190 128 / 0.8)',
+                }}
+              />
+            ))}
+          </motion.div>
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgb(0_0_0/0.7)_100%)]" />
         </motion.div>
 
         {/* Contenu */}
         <motion.div
           style={{ opacity: contentOpacity, y: contentY, filter: contentBlur, pointerEvents: contentEvents }}
-          className="relative mx-auto flex h-full max-w-[1260px] flex-col justify-center px-5 pb-8 pt-20 sm:px-10 lg:px-16"
+          className="page-x relative flex h-full flex-col justify-center pb-6 pt-[calc(var(--header-h)+0.25rem)] lg:pb-8"
         >
-          <motion.span
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, ease }}
-            className="eyebrow ml-2 self-start text-gold-300 sm:ml-28"
-          >
-            Galerie
-          </motion.span>
-          <motion.h2
-            id="galerie-titre"
-            initial={{ opacity: 0, y: 30, filter: 'blur(8px)' }}
-            whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            viewport={{ once: true }}
-            transition={{ duration: 1, delay: 0.1, ease }}
-            className="mt-3 text-[clamp(1.6rem,3.4vw,2.6rem)] font-bold tracking-[0.03em] text-white sm:ml-28"
-          >
-            Nos dernières <span className="text-gold-300">réalisations.</span>
-          </motion.h2>
+          <div className="lg:pl-[10vw]">
+            <motion.span
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, ease }}
+              className="eyebrow normal-case !text-gold-300"
+            >
+              Galerie
+            </motion.span>
+            <motion.h2
+              id="galerie-titre"
+              initial={{ opacity: 0, y: 30, filter: 'blur(8px)' }}
+              whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              viewport={{ once: true }}
+              transition={{ duration: 1, delay: 0.1, ease }}
+              className="mt-2 text-[clamp(1.55rem,2.9vw,2.9rem)] font-bold tracking-[0.03em] text-white lg:pl-[1.5vw]"
+            >
+              Nos dernières <span className="text-gold-300">réalisations.</span>
+            </motion.h2>
+          </div>
 
           <div
             role="tablist"
             aria-label="Filtrer la galerie"
-            data-lenis-prevent
-            className="mt-6 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] sm:gap-5"
+            data-lenis-prevent-horizontal
+            className="mt-5 flex gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none] sm:gap-4 lg:mt-[2.2svh] lg:gap-[2.9vw]"
           >
             {galleryFilters.map((f, i) => (
               <motion.button
@@ -109,9 +218,9 @@ export function Gallery() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: 0.2 + i * 0.06, ease }}
-                className={`relative shrink-0 rounded-full border px-5 py-2 text-sm transition-colors duration-300 sm:px-12 ${
-                  filter === f ? 'border-white text-ink' : 'border-gold-300/80 text-white hover:border-gold-300 hover:text-gold-300'
-                }`}
+                className={`relative shrink-0 rounded-full border-2 px-5 py-1.5 text-sm transition-colors duration-300 lg:min-w-[13vw] lg:py-[0.55vw] lg:text-[clamp(0.85rem,1.2vw,1.1rem)] ${
+                  f === 'Tous' ? 'lg:min-w-[6.5vw]' : ''
+                } ${filter === f ? 'border-white text-ink' : 'border-gold-300/80 text-white hover:border-gold-300 hover:text-gold-300'}`}
               >
                 {filter === f && (
                   <motion.span layoutId="gal-pill" className="absolute inset-0 rounded-full bg-white" transition={{ type: 'spring', stiffness: 380, damping: 32 }} />
@@ -122,50 +231,30 @@ export function Gallery() {
           </div>
 
           <LayoutGroup>
-            <motion.ul layout className="mt-7 grid h-[min(52svh,440px)] grid-cols-2 grid-rows-3 gap-3 md:grid-cols-4 md:grid-rows-2 md:gap-5">
+            <motion.ul
+              layout
+              className="mt-5 grid h-[min(58svh,calc((100vw-2*var(--gutter))*1.3))] grid-cols-2 grid-rows-[1.25fr_1fr_1fr] gap-2.5 sm:gap-4 lg:mt-[3svh] lg:h-[min(56svh,calc((100vw-2*var(--gutter))*0.297))] lg:grid-cols-[1.97fr_1fr_1fr] lg:grid-rows-2 lg:gap-[2.6vw]"
+            >
               <AnimatePresence mode="popLayout">
                 {visible.map((g, i) => (
                   <motion.li
                     layout
-                    key={g.src}
+                    key={g.slug}
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.9 }}
                     transition={{ duration: 0.6, ease }}
-                    className={i === 0 ? 'col-span-2 md:row-span-2' : ''}
+                    className={i === 0 ? 'col-span-2 lg:col-span-1 lg:row-span-2' : ''}
                   >
-                    <button
-                      onClick={() => setLightbox(items.indexOf(g))}
-                      className="group relative h-full w-full overflow-hidden rounded-[1.6rem] text-left focus-visible:rounded-[1.6rem]"
-                      aria-label={`Agrandir : ${g.alt}`}
-                    >
-                      <img
-                        src={g.src}
-                        alt={g.alt}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition-transform duration-[1.2s] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-110"
-                      />
-                      <span className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-70 transition-opacity duration-500 group-hover:opacity-100" />
-                      <span
-                        className={`absolute bottom-3 left-3 rounded-[1.4rem] bg-gradient-to-r from-gold-600/90 to-gold-500/30 px-4 py-2 text-white backdrop-blur-[2px] transition-transform duration-500 group-hover:-translate-y-1 ${
-                          i === 0 ? 'sm:bottom-6 sm:left-6 sm:px-8 sm:py-4' : ''
-                        }`}
-                      >
-                        <span className={`block font-bold tracking-[0.08em] ${i === 0 ? 'text-lg sm:text-2xl' : 'text-sm'}`}>{g.category}</span>
-                        <span className="flex items-center gap-1 text-[0.7rem] tracking-[0.08em] sm:text-xs">
-                          {counts[g.category]} VISUELS
-                          <ChevronRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-                        </span>
-                      </span>
-                    </button>
+                    <Tile item={g} big={i === 0} autoPlay={i === 0 && inView} onOpen={() => setLightbox(items.indexOf(g))} />
                   </motion.li>
                 ))}
               </AnimatePresence>
             </motion.ul>
           </LayoutGroup>
         </motion.div>
-      </div>
-      <Lightbox images={items} index={lightbox} onChange={setLightbox} />
+      </motion.div>
+      <Lightbox items={items} index={lightbox} onChange={setLightbox} />
     </section>
   )
 }
