@@ -1,42 +1,106 @@
 # Glorious Hall — site vitrine
 
-React 19 + TypeScript + Tailwind 4 (Vite), animations Motion, défilement fluide Lenis.
+Site une page de Glorious Hall, salle événementielle à Bonamoussadi (Douala) :
+mariages, anniversaires, séminaires et réceptions.
+
+## Pile technique
+
+| Choix                               | Pourquoi                                                                                                 |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| **Vite + React 19 + TypeScript**    | Rechargement instantané, découpage en composants, typage strict                                          |
+| **vite-react-ssg** (comme Precious) | Le build génère un `index.html` complet : Google et les aperçus de partage lisent le contenu sans script |
+| **Tailwind CSS v4**                 | Styles au plus près des composants ; jetons de design centralisés dans `@theme`                          |
+| **Motion**                          | Animations d'apparition, transitions des diapositives, effets liés au défilement                         |
+| **Lenis**                           | Défilement fluide, socle du défilement par étapes                                                        |
 
 ## Démarrer
 
 ```bash
 npm install
-npm run dev      # développement
-npm run build    # production (dossier dist/)
+npm run dev          # développement
+npm run build        # build + prérendu dans dist/
+npm run preview      # prévisualiser le build
+npm run apercu       # build autonome à chemins relatifs (ouvrable depuis n'importe quel hébergement)
+npm run lint         # oxlint (React, accessibilité, TypeScript)
+npm run typecheck    # TypeScript strict
+npm run format       # Prettier (+ tri des classes Tailwind)
 ```
 
-Déploiement Vercel : framework « Vite », commande `npm run build`, dossier `dist`.
+Node 20.19 ou plus. Déploiement Vercel : `vercel.json` fixe la commande (`npm run build`), le dossier (`dist`),
+le cache et les en-têtes de sécurité.
 
-Aperçu autonome (polices intégrées au CSS) : `APERCU=1 npm run build`.
+## Organisation
 
-## Modifier le contenu
+```
+src/
+├── content/              Tout l'éditorial : textes, coordonnées, vidéos, avis
+│   ├── site.ts           Identité, coordonnées, navigation
+│   ├── offre.ts          Capacité (120 + 200 = 320), atouts, prestations, chiffres
+│   ├── services.ts       Diapositives « Nos services »
+│   ├── videos.ts         Vidéos du hero (paysage / portrait) et de la galerie
+│   └── avis.ts           Avis (exemples à remplacer)
+├── components/
+│   ├── layout/           En-tête, pied de page, défilement, données structurées
+│   ├── sections/         Une section de la page = un composant
+│   └── ui/               Briques réutilisables (icônes, visionneuse, logo animé…)
+├── hooks/                useMediaQuery
+├── lib/                  Défilement par étapes, médias, animations, utilitaires
+└── styles/index.css      Jetons de design, base, animations
+```
 
-Tout le texte, les coordonnées, les vidéos et les avis sont dans `src/content.ts`.
+**Règle de travail :** modifier un texte, un chiffre ou une vidéo ne demande jamais de toucher à un composant :
+tout le contenu vit dans `src/content/`. Aucune couleur de la charte n'est écrite en dur hors de `@theme`.
 
-- Mots en doré dans les titres de services : entourez-les de crochets, ex. `Des [décorations] qui`.
-  `retraits` décale chaque ligne du titre (en em), comme sur la maquette.
-- Vidéos : fichiers dans `public/videos/` (complètes), `public/videos/apercus/` (6 s, survol des vignettes)
-  et `public/videos/affiches/` (images fixes). `fin` = seconde où commence le générique : le hero passe
-  à la vidéo suivante à ce moment-là.
-- Avis : ajoutez des entrées à `testimonials`, le carrousel s'adapte.
-- Logo : `src/assets/img/logo-clair.webp` (fonds sombres) et `logo-sombre.webp` (fonds clairs).
-  Les mêmes en PNG transparent sont dans `ressources/` pour un usage hors du site.
+## Comportements de la page
 
-## Comportements
+- **Défilement par étapes** (`src/lib/steps.ts`) : un cran de molette, un glissé au doigt ou une flèche du clavier
+  = une étape. Enchaînement : hero → section 2 (qui le recouvre) → défilement libre → un service par cran → la
+  galerie en un cran → logo seul → « À propos » en un cran → défilement libre. Les crans suivants d'un même geste
+  sont absorbés ; à l'arrivée sur la galerie, une courte pause laisse le temps de la découvrir.
+- **Hero** : vidéos en fond, floutées. Écran en portrait (téléphone) : vidéos verticales, « 1 » et « 2 » d'abord ;
+  sinon vidéos horizontales. Le bouton lecture passe en mode cinéma (flou retiré, son, textes masqués sauf le
+  titre).
+- **Vidéos** : lecture fiable sur iPhone et dans les navigateurs intégrés (WhatsApp, Facebook) : attribut `muted`
+  posé dans le DOM et relance au premier geste si la lecture automatique est refusée (`src/lib/media.ts`).
+- **Galerie** : logo vectorisé (net à toutes les tailles) animé en fond — la signature s'écrit, l'arbre pousse
+  puis se balance au vent, des feuilles d'or s'en détachent, un reflet glisse sur le G et le H.
+- **Accessibilité** : réglage « réduire les animations » respecté, fenêtre vidéo native (`<dialog>`), focus
+  visible, carrousel d'avis conforme aux recommandations WAI-ARIA, contenu lisible sans JavaScript.
 
-- `src/lib/steps.ts` : défilement par étapes. Un cran de molette, un glissé ou une flèche du clavier
-  = une étape (hero → section 2, chaque service, galerie). Les crans suivants du même geste sont absorbés ;
-  au-delà de la dernière étape le défilement redevient normal.
-- `Hero.tsx` : vidéos en fond (floutées), bouton lecture = mode cinéma (flou retiré, son, textes masqués
-  sauf le titre).
-- `Offer.tsx` : section 2 mise à l'échelle de la maquette (unité `--u`), défilement latéral sur mobile.
-- `Services.tsx` : cadre photo découpé selon la forme relevée sur la maquette (`FRAME_PATH`).
-- `Gallery.tsx` : 1er cran, le contenu s'efface sur le générique doré ; 2e cran, section suivante.
-- En-tête (`Header.tsx`) : repris de Precious (hauteur fixe, voile flouté au défilement, soulignement
-  animé, menu déroulant sur mobile) ; la teinte du voile suit la section en dessous (`data-theme`).
-- Marges de page : `--gutter` (4,4 % de la largeur, comme Precious), classe `page-x`.
+## Référencement (SEO)
+
+- Prérendu complet de la page (`vite-react-ssg`), une seule balise `h1`, titres hiérarchisés, textes alternatifs.
+- `index.html` : titre, description, `robots`, `canonical`, Open Graph et carte Twitter (image `public/og-image.jpg`).
+- Données structurées schema.org (`src/components/layout/StructuredData.tsx`) : `EventVenue` + `LocalBusiness`
+  avec adresse, téléphones, capacité, équipements et prestations, tirés du contenu.
+- `robots.txt` et `sitemap.xml` générés au build à partir du domaine.
+- Polices et affiche du hero préchargées ; images hors écran chargées à la demande.
+
+**Domaine :** défini une seule fois dans `.env` (`VITE_SITE_URL`). Il alimente `canonical`, Open Graph, les
+données structurées, `robots.txt` et `sitemap.xml`.
+
+## Ajouter ou remplacer une vidéo
+
+```bash
+scripts/encoder-video.sh ~/Téléchargements/ma-video.mp4 mon-slug paysage 4   # 4 = seconde de l'affiche
+scripts/encoder-video.sh ~/Téléchargements/ma-video.mp4 mon-slug portrait 2
+```
+
+Puis déclarer la vidéo dans `src/content/videos.ts` (`galerie`, `heroPaysage` ou `heroPortrait`), avec `debut` et
+`fin` : la seconde où le hero passe à la vidéo suivante (avant un générique ou un fondu au noir).
+
+**Héberger les vidéos ailleurs** (CDN) : un fichier JSON « chemin → adresse » passé au build
+(`MEDIAS=medias.json npm run build`), voir `src/lib/media.ts`. Penser alors à ajouter le domaine du CDN à
+`media-src` dans la politique de sécurité de `vercel.json`.
+
+## À compléter avant la mise en ligne
+
+1. **Avis** — `src/content/avis.ts` contient des avis d'exemple, signalés comme tels à l'écran : à remplacer par de
+   vrais avis clients, avec leur accord.
+2. **Domaine** — vérifier `VITE_SITE_URL` dans `.env`.
+3. **Mentions légales et politique de confidentialité** — à rédiger.
+
+## Ressources
+
+`ressources/` contient le logo détouré en PNG transparent (`logo-clair.png` pour fonds sombres, `logo-sombre.png`
+pour fonds clairs).

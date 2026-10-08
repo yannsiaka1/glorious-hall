@@ -1,36 +1,59 @@
 import { motion, useScroll, useSpring } from 'motion/react'
 import { useRef } from 'react'
-import { About } from './components/About'
-import { Contact } from './components/Contact'
-import { Footer } from './components/Footer'
-import { Gallery } from './components/Gallery'
-import { Header } from './components/Header'
-import { Hero } from './components/Hero'
-import { Offer } from './components/Offer'
-import { Services } from './components/Services'
-import { Testimonials } from './components/Testimonials'
-import { SmoothScroll, useStepZone } from './lib/scroll'
-import { docTop } from './lib/steps'
+import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
+import { StructuredData } from '@/components/layout/StructuredData'
+import { About } from '@/components/sections/About'
+import { Contact } from '@/components/sections/Contact'
+import { Gallery } from '@/components/sections/Gallery'
+import { Hero } from '@/components/sections/Hero'
+import { Offer } from '@/components/sections/Offer'
+import { Services } from '@/components/sections/Services'
+import { Testimonials } from '@/components/sections/Testimonials'
+import { SmoothScroll } from '@/components/layout/SmoothScroll'
+import { useZoneEtapes } from '@/lib/defileur'
+import { hautDansDocument } from '@/lib/steps'
 
+/**
+ * Enchaînement de la page :
+ * hero → (1 cran) section 2 qui le recouvre → défilement libre → services
+ * (1 cran par service, puis 1 cran vers la galerie) → galerie (contenu, puis
+ * logo seul, puis 1 cran vers « À propos ») → défilement libre jusqu'au pied.
+ *
+ * L'ordre des sections compte : services et galerie prennent pour dernier
+ * arrêt le haut de la section qui les suit.
+ */
 function Page() {
-  const offerRef = useRef<HTMLElement>(null)
+  const offre = useRef<HTMLElement>(null)
 
-  // 0 quand la section 2 entre par le bas, 1 quand elle recouvre entièrement le hero
-  const { scrollYProgress: coverProgress } = useScroll({ target: offerRef, offset: ['start end', 'start start'] })
+  // 0 quand la section 2 entre par le bas, 1 quand elle recouvre entièrement le hero.
+  const { scrollYProgress: recouvrement } = useScroll({ target: offre, offset: ['start end', 'start start'] })
   const { scrollYProgress } = useScroll()
-  const bar = useSpring(scrollYProgress, { stiffness: 120, damping: 30 })
+  const progression = useSpring(scrollYProgress, { stiffness: 120, damping: 30 })
 
-  // Un cran : la section 2 monte et remplace exactement le hero
-  useStepZone({ id: 'hero', stops: () => (offerRef.current ? [0, docTop(offerRef.current)] : []) })
+  useZoneEtapes({
+    id: 'accueil',
+    arrets: () => (offre.current ? [{ y: 0 }, { y: hautDansDocument(offre.current) }] : []),
+  })
 
   return (
     <>
-      <motion.div aria-hidden style={{ scaleX: bar }} className="fixed inset-x-0 top-0 z-[70] h-0.5 origin-left bg-gold-400" />
+      <a
+        href="#contenu"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-full focus:bg-ink focus:px-5 focus:py-3 focus:text-white"
+      >
+        Aller au contenu
+      </a>
+      <motion.div
+        aria-hidden="true"
+        style={{ scaleX: progression }}
+        className="fixed inset-x-0 top-0 z-[70] h-0.5 origin-left bg-gold-400"
+      />
       <Header />
-      <main>
+      <main id="contenu">
         <div className="relative">
-          <Hero coverProgress={coverProgress} />
-          <Offer ref={offerRef} coverProgress={coverProgress} />
+          <Hero recouvrement={recouvrement} />
+          <Offer ref={offre} recouvrement={recouvrement} />
         </div>
         <Services />
         <Gallery />
@@ -39,6 +62,7 @@ function Page() {
         <Contact />
       </main>
       <Footer />
+      <StructuredData />
     </>
   )
 }

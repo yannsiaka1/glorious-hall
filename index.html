@@ -2,19 +2,51 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#1c1b19" />
+    <meta name="theme-color" content="#141412" />
+
     <title>Glorious Hall | Salle de fête à Douala : mariage, anniversaire, séminaire</title>
-    <meta name="description" content="Glorious Hall, salle événementielle à Bonamoussadi, Douala : mariages, anniversaires et séminaires. Écrivez-nous sur WhatsApp pour visiter et réserver." />
-    <link rel="canonical" href="https://www.glorioushall.com/" />
+    <meta
+      name="description"
+      content="Glorious Hall, salle événementielle à Bonamoussadi, Douala : mariages, anniversaires, séminaires et réceptions jusqu'à 320 invités. Écrivez-nous sur WhatsApp pour visiter et réserver."
+    />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-video-preview:-1" />
+    <link rel="canonical" href="%VITE_SITE_URL%/" />
+
+    <!-- Partage sur les réseaux sociaux et les messageries (WhatsApp, Facebook…) -->
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="fr_FR" />
     <meta property="og:site_name" content="Glorious Hall" />
-    <meta property="og:title" content="Glorious Hall | Salle de fête à Douala : mariage, anniversaire, séminaire" />
-    <meta property="og:description" content="Glorious Hall, salle événementielle à Bonamoussadi, Douala : mariages, anniversaires et séminaires. Écrivez-nous sur WhatsApp pour visiter et réserver." />
-    <meta property="og:url" content="https://www.glorioushall.com" />
+    <meta property="og:title" content="Glorious Hall | Salle de fête à Douala" />
+    <meta
+      property="og:description"
+      content="Mariages, anniversaires, séminaires : une salle moderne et raffinée à Bonamoussadi, avec espace extérieur, décoration et organisation clés en main."
+    />
+    <meta property="og:url" content="%VITE_SITE_URL%/" />
+    <meta property="og:image" content="%VITE_SITE_URL%/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Logo doré de Glorious Hall sur la salle de réception dressée" />
     <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!--
+      Sans JavaScript, les apparitions au défilement ne se déclenchent pas :
+      on affiche tout d'emblée plutôt que de laisser des blocs invisibles.
+    -->
+    <noscript>
+      <style>
+        [data-reveal] {
+          opacity: 1 !important;
+          transform: none !important;
+          filter: none !important;
+          clip-path: none !important;
+        }
+      </style>
+    </noscript>
   </head>
   <body>
     <div id="root"></div>
