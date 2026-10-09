@@ -3,6 +3,7 @@ import logoSombre from '@/assets/img/logo-sombre.webp'
 import mariageScene from '@/assets/img/mariage-scene.webp'
 import oiseaux from '@/assets/img/oiseaux-cristal.webp'
 import reception from '@/assets/img/reception.webp'
+import seminaire from '@/assets/img/seminaire.webp'
 import { capacite } from './offre'
 
 /**
@@ -87,8 +88,9 @@ export const services: Service[] = [
     cle: 'seminaires',
     legende: 'Séminaires & réunions',
     sousLegende: ['Salle intérieure + sono'],
-    image: reception,
-    descriptionImage: 'Salle intérieure climatisée et sonorisée',
+    image: seminaire,
+    descriptionImage:
+      'Salle en configuration séminaire : rangées de chaises blanches face à l’estrade et au grand écran',
     titre: ['Un cadre [professionnel]', 'pour vos [rencontres]', 'qui comptent.'],
     retraits: [0, 1.9, 0.3],
     texte: 'Conférences, formations ou lancements : une salle sonorisée, climatisée et alimentée en continu.',

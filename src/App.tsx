@@ -16,12 +16,12 @@ import { hautDansDocument } from '@/lib/steps'
 
 /**
  * Enchaînement de la page :
- * hero → (1 cran) section 2 qui le recouvre → défilement libre → services
- * (1 cran par service, puis 1 cran vers la galerie) → galerie (contenu, puis
- * logo seul, puis 1 cran vers « À propos ») → défilement libre jusqu'au pied.
+ * hero → (1 cran) section 2 qui le recouvre → (1 cran) services (1 cran par
+ * service, puis 1 cran vers la galerie) → galerie (contenu, puis logo seul,
+ * puis 1 cran vers « À propos ») → défilement libre jusqu'au pied.
  *
- * L'ordre des sections compte : services et galerie prennent pour dernier
- * arrêt le haut de la section qui les suit.
+ * L'ordre des sections compte : la section 2, les services et la galerie
+ * prennent pour dernier arrêt le haut de la section qui les suit.
  */
 function Page() {
   const offre = useRef<HTMLElement>(null)
@@ -33,7 +33,13 @@ function Page() {
 
   useZoneEtapes({
     id: 'accueil',
-    arrets: () => (offre.current ? [{ y: 0 }, { y: hautDansDocument(offre.current) }] : []),
+    arrets: () => {
+      const section2 = offre.current
+      if (!section2) return []
+      // Section qui suit le bloc hero + section 2 : les services.
+      const suivante = section2.parentElement?.nextElementSibling
+      return [{ y: 0 }, { y: hautDansDocument(section2) }, ...(suivante ? [{ y: hautDansDocument(suivante) }] : [])]
+    },
   })
 
   return (

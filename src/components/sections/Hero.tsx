@@ -277,20 +277,25 @@ export function Hero({ recouvrement }: Props) {
         className="pointer-events-none absolute inset-0 z-[3] bg-black"
       />
 
-      {/* Contenu */}
-      <div className="relative z-[4] flex min-h-0 flex-1 flex-col justify-end page-x pt-[var(--header-h)] pb-6 md:justify-center md:pb-4">
-        <div className="max-w-[44rem]">
+      {/*
+        Contenu. Les tailles suivent la largeur ET la hauteur de l'écran
+        (`min(…vw, …svh)`) : sur un portable où le navigateur laisse peu de
+        hauteur, le bloc rétrécit au lieu de déborder. Les marges automatiques
+        (plutôt que justify-center) le gardent toujours sous l'en-tête.
+      */}
+      <div className="relative z-[4] flex min-h-0 flex-1 flex-col page-x pt-[var(--header-h)] pb-6 md:pb-4">
+        <div className="mt-auto max-w-[44rem] md:mb-auto">
           <motion.p
             data-reveal
             {...apparition(0)}
-            className="font-roman text-[clamp(1rem,1.35vw,1.3rem)] text-white/90"
+            className="font-roman text-[clamp(min(1rem,2.6svh),min(1.35vw,2.6svh),1.3rem)] text-white/90"
           >
             L’élégance pour tous vos événements
           </motion.p>
           <h1>
             <motion.span
               data-reveal
-              className="block font-script text-[clamp(3.4rem,6.5vw,6.6rem)] leading-[1.12] text-gold-300 [text-shadow:0_2px_18px_rgb(0_0_0/0.35)]"
+              className="block font-script text-[clamp(min(3.4rem,11svh),min(6.5vw,11svh),6.6rem)] leading-[1.12] text-gold-300 [text-shadow:0_2px_18px_rgb(0_0_0/0.35)]"
               initial={{ clipPath: 'inset(-20% 100% -20% 0)' }}
               animate={{ clipPath: 'inset(-20% 0% -20% 0)' }}
               transition={{ duration: 1.6, delay: T_CONTENU + 0.1, ease: EASE_DEVOILEMENT }}
@@ -298,7 +303,7 @@ export function Hero({ recouvrement }: Props) {
               Glorious Hall,
             </motion.span>
             <motion.span
-              className="block font-roman text-[clamp(1.75rem,3.5vw,3.35rem)] leading-[1.18] text-white"
+              className="block font-roman text-[clamp(min(1.75rem,5.6svh),min(3.5vw,5.6svh),3.35rem)] leading-[1.18] text-white"
               animate={{ opacity: cinema ? 0 : 1, y: cinema ? 14 : 0, filter: cinema ? 'blur(6px)' : 'blur(0px)' }}
               transition={{ duration: 0.6, ease: EASE }}
             >
@@ -326,12 +331,16 @@ export function Hero({ recouvrement }: Props) {
             <motion.p
               data-reveal
               {...apparition(5)}
-              className="mt-4 max-w-[34rem] text-[clamp(0.82rem,1vw,0.98rem)] leading-relaxed tracking-[0.12em] text-white/85 max-md:[@media(max-height:740px)]:hidden"
+              className="mt-4 max-w-[34rem] text-[clamp(min(0.82rem,2svh),min(1vw,2svh),0.98rem)] leading-relaxed tracking-[0.12em] text-white/85 md:mt-[min(1rem,2svh)] md:[@media(max-height:660px)]:hidden max-md:[@media(max-height:740px)]:hidden"
             >
               Mariage, séminaire, anniversaire, baptême, réception, gala… Une salle moderne, équipée et raffinée à
               Douala, pensée pour donner vie à des moments inoubliables.
             </motion.p>
-            <motion.div data-reveal {...apparition(6)} className="mt-6 flex flex-wrap gap-2.5 sm:mt-7 sm:gap-4">
+            <motion.div
+              data-reveal
+              {...apparition(6)}
+              className="mt-6 flex flex-wrap gap-2.5 sm:mt-7 sm:gap-4 md:mt-[min(1.75rem,3.5svh)]"
+            >
               <a
                 href={contact.whatsapp}
                 target="_blank"
@@ -356,7 +365,7 @@ export function Hero({ recouvrement }: Props) {
             {...apparition(7)}
             role="tablist"
             aria-label="Choisir une vidéo"
-            className="mt-6 flex min-h-2 flex-wrap gap-2"
+            className="mt-6 flex min-h-2 flex-wrap gap-2 md:mt-[min(1.5rem,3svh)]"
           >
             {clips.map((clip, rang) => (
               <button
@@ -418,7 +427,7 @@ export function Hero({ recouvrement }: Props) {
       <motion.div
         animate={{ opacity: cinema ? 0 : 1 }}
         transition={{ duration: 0.5 }}
-        className="absolute top-[62%] right-[5%] z-[4] hidden md:block"
+        className="absolute top-[62%] right-[5%] z-[4] hidden md:[@media(min-height:521px)]:block"
       >
         <motion.p
           data-reveal
@@ -438,9 +447,9 @@ export function Hero({ recouvrement }: Props) {
         animate={{ opacity: cinema ? 0 : 1, y: cinema ? 40 : 0 }}
         transition={cinema ? { duration: 0.5, ease: EASE } : { duration: 1.1, delay: T_CONTENU + 0.7, ease: EASE }}
         inert={cinema}
-        className="relative z-[4] page-x pb-4 sm:pb-6"
+        className="relative z-[4] page-x pb-4 sm:pb-[min(1.5rem,3svh)]"
       >
-        <ul className="grid grid-cols-5 gap-1 rounded-[1.6rem] bg-black/70 px-2 py-3 backdrop-blur-md sm:rounded-[2rem] sm:px-8 sm:py-5">
+        <ul className="grid grid-cols-5 gap-1 rounded-[1.6rem] bg-black/70 px-2 py-3 backdrop-blur-md sm:rounded-[2rem] sm:px-8 sm:py-[min(1.25rem,2.4svh)]">
           {atoutsHero.map((atout, rang) => (
             <motion.li
               key={atout.libelle}
@@ -452,12 +461,12 @@ export function Hero({ recouvrement }: Props) {
             >
               <Icon
                 nom={atout.icone}
-                className="h-6 w-6 text-gold-300 transition-transform duration-500 group-hover:-translate-y-1 group-hover:scale-110 sm:h-11 sm:w-11"
+                className="h-6 w-6 text-gold-300 transition-transform duration-500 group-hover:-translate-y-1 group-hover:scale-110 sm:h-[min(2.75rem,6svh)] sm:w-[min(2.75rem,6svh)]"
               />
-              <span className="mt-1.5 text-[0.62rem] leading-tight font-bold tracking-[0.06em] text-gold-300 sm:mt-2 sm:text-lg">
+              <span className="mt-1.5 text-[0.62rem] leading-tight font-bold tracking-[0.06em] text-gold-300 sm:mt-[min(0.5rem,1svh)] sm:text-[min(1.125rem,2.7svh)]">
                 {atout.valeur}
               </span>
-              <span className="text-[0.58rem] leading-tight tracking-[0.04em] text-gold-200/90 sm:text-base">
+              <span className="text-[0.58rem] leading-tight tracking-[0.04em] text-gold-200/90 sm:text-[min(1rem,2.4svh)]">
                 {atout.libelle}
               </span>
             </motion.li>

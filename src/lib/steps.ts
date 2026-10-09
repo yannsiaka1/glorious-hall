@@ -16,7 +16,10 @@ import type { VirtualScrollData } from 'lenis'
  *
  * Un arrêt peut imposer un temps de pause (`pause`, en ms) : à l'arrivée, les
  * gestes sont ignorés pendant ce délai pour que la section ait le temps de se
- * révéler entièrement avant l'étape suivante.
+ * révéler entièrement avant l'étape suivante. De plus, l'étape suivante ne
+ * part qu'avec un geste qui commence après un vrai silence : la traîne du
+ * geste d'arrivée (inertie d'un pavé tactile, souvent irrégulière quand la
+ * machine est chargée) ne peut pas la déclencher toute seule.
  */
 
 export type Arret = {
@@ -48,6 +51,8 @@ const GLISSE_MIN_PX = 26
 
 const zones = new Map<string, Zone>()
 let verrouJusqua = 0
+/** Après un arrêt avec pause : seul un geste précédé d'un silence compte comme neuf. */
+let silenceExige = false
 const molette = { dernier: 0, recents: [] as number[] }
 const doigt = { neuf: false, cumulY: 0, cumulX: 0 }
 
@@ -127,7 +132,9 @@ function pauseA(y: number): number {
 }
 
 function lancer(lenis: Lenis, zone: Zone, y: number, index: number): void {
-  verrouJusqua = performance.now() + DUREE_PAS * 1000 * 0.82 + pauseA(y)
+  const pause = pauseA(y)
+  verrouJusqua = performance.now() + DUREE_PAS * 1000 * 0.82 + pause
+  silenceExige = pause > 0
   zone.surEtape?.(index)
   lenis.scrollTo(y, { duration: DUREE_PAS, easing: accelereRalentit, lock: true, force: true })
 }
@@ -161,11 +168,13 @@ export function gererDefilement(donnees: VirtualScrollData, lenis: Lenis | null)
     gesteNeuf = doigt.neuf
   } else {
     // Nouveau geste : un silence entre deux crans, ou une nette accélération
-    // (l'inertie d'un pavé tactile ne fait que décroître).
+    // (l'inertie d'un pavé tactile ne fait que décroître). Juste après un
+    // arrêt avec pause, seul le silence compte.
     const amplitude = Math.abs(delta)
     const silence = maintenant - molette.dernier
     const pic = molette.recents.length > 0 ? Math.max(...molette.recents) : 0
-    gesteNeuf = silence > SILENCE_GESTE_MS || (amplitude > pic * 1.6 && amplitude > 6)
+    if (silence > SILENCE_GESTE_MS) silenceExige = false
+    gesteNeuf = silence > SILENCE_GESTE_MS || (!silenceExige && amplitude > pic * 1.6 && amplitude > 6)
     molette.dernier = maintenant
     molette.recents = silence > SILENCE_GESTE_MS ? [amplitude] : [...molette.recents.slice(-3), amplitude]
   }

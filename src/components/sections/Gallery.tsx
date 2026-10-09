@@ -23,16 +23,23 @@ const nombreParCategorie = galerie.reduce<Record<string, number>>((total, video)
 type VignetteProps = {
   video: VideoGalerie
   grande: boolean
-  /** Aperçu animé en continu (grande vignette, galerie à l'écran). */
-  enContinu: boolean
   onOuvrir: () => void
 }
 
-/** Vignette vidéo : affiche fixe, aperçu animé au survol (ou en continu pour la grande). */
-function Vignette({ video, grande, enContinu, onOuvrir }: VignetteProps) {
+/**
+ * Vignette vidéo : affiche nette, vidéo seulement quand on la survole
+ * vraiment à la souris (ou qu'on y arrive au clavier).
+ *
+ * - Le survol démarre au premier mouvement de souris sur la vignette, pas à
+ *   l'entrée : quand la galerie arrive sous un curseur immobile, le navigateur
+ *   signale une entrée, et la vidéo démarrerait toute seule à l'arrivée.
+ * - Les petites vignettes lisent l'aperçu de 6 s (520 px de large). La grande
+ *   lit la vidéo elle-même : l'aperçu, agrandi à sa taille, paraîtrait flou à
+ *   côté de son affiche de 960 px.
+ */
+function Vignette({ video, grande, onOuvrir }: VignetteProps) {
   const apercu = useRef<HTMLVideoElement>(null)
-  const [survol, setSurvol] = useState(false)
-  const enLecture = enContinu || survol
+  const [enLecture, setEnLecture] = useState(false)
 
   useEffect(() => {
     if (apercu.current) preparerVideoMuette(apercu.current)
@@ -49,10 +56,14 @@ function Vignette({ video, grande, enContinu, onOuvrir }: VignetteProps) {
     <button
       type="button"
       onClick={onOuvrir}
-      onMouseEnter={() => setSurvol(true)}
-      onMouseLeave={() => setSurvol(false)}
-      onFocus={() => setSurvol(true)}
-      onBlur={() => setSurvol(false)}
+      onPointerMove={(evenement) => {
+        if (evenement.pointerType === 'mouse' && !enLecture) setEnLecture(true)
+      }}
+      onPointerLeave={() => setEnLecture(false)}
+      onFocus={(evenement) => {
+        if (evenement.currentTarget.matches(':focus-visible')) setEnLecture(true)
+      }}
+      onBlur={() => setEnLecture(false)}
       aria-label={`Lire la vidéo : ${video.titre}`}
       className="group relative h-full w-full overflow-hidden rounded-[1.4rem] text-left lg:rounded-[1.8rem]"
     >
@@ -61,18 +72,21 @@ function Vignette({ video, grande, enContinu, onOuvrir }: VignetteProps) {
         alt=""
         loading="lazy"
         decoding="async"
-        className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.2s] ease-(--ease-lux) group-hover:scale-110"
+        className={cn(
+          'absolute inset-0 h-full w-full object-cover transition-transform duration-[1.2s] ease-(--ease-lux)',
+          enLecture && 'scale-110',
+        )}
       />
-      {/* oxlint-disable-next-line jsx-a11y/media-has-caption -- aperçu muet de 6 secondes, sans paroles */}
+      {/* oxlint-disable-next-line jsx-a11y/media-has-caption -- aperçu muet joué au survol, sans paroles */}
       <video
         ref={apercu}
-        src={video.apercu}
+        src={grande ? `${video.src}#t=${video.debut}` : video.apercu}
         loop
         playsInline
         preload="none"
         className={cn(
-          'absolute inset-0 h-full w-full object-cover transition-[opacity,transform] duration-700 ease-(--ease-lux) group-hover:scale-110',
-          enLecture ? 'opacity-100' : 'opacity-0',
+          'absolute inset-0 h-full w-full object-cover transition-[opacity,transform] duration-700 ease-(--ease-lux)',
+          enLecture ? 'scale-110 opacity-100' : 'opacity-0',
         )}
       />
       <span className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent opacity-80 transition-opacity duration-500 group-hover:opacity-100" />
@@ -109,8 +123,10 @@ function Vignette({ video, grande, enContinu, onOuvrir }: VignetteProps) {
 
 /**
  * Galerie épinglée, en trois crans :
- * 1. arrivée : la galerie remplit l'écran, nette ; une courte pause laisse le
- *    temps de la découvrir avant que le cran suivant ne puisse l'effacer ;
+ * 1. arrivée : la galerie remplit l'écran, nette et immobile (ses apparitions
+ *    sont terminées avant la fin du cran, aucune vidéo ne démarre seule) ;
+ *    rien ne bouge avant un nouveau geste, et la fin du geste d'arrivée ne
+ *    compte pas (voir `pause` dans src/lib/steps.ts) ;
  * 2. le contenu s'efface et laisse le logo animé seul à l'écran ;
  * 3. on passe à la section suivante.
  */
@@ -118,7 +134,6 @@ export function Gallery() {
   const ref = useRef<HTMLElement>(null)
   const [filtre, setFiltre] = useState<FiltreGalerie>('Tous')
   const [ouverte, setOuverte] = useState<number | null>(null)
-  const [aLEcran, setALEcran] = useState(false)
   const [fondSeul, setFondSeul] = useState(false)
 
   useZoneEtapes({
@@ -150,16 +165,6 @@ export function Gallery() {
   useMotionValueEvent(scrollYProgress, 'change', (progression) => {
     setFondSeul((avant) => (progression > 0.55 ? true : progression < 0.2 ? false : avant))
   })
-
-  useEffect(() => {
-    const section = ref.current
-    if (!section) return
-    const observateur = new IntersectionObserver(([entree]) => setALEcran(entree?.isIntersecting ?? false), {
-      threshold: 0.15,
-    })
-    observateur.observe(section)
-    return () => observateur.disconnect()
-  }, [])
 
   const videos = useMemo(
     () => (filtre === 'Tous' ? galerie : galerie.filter((video) => video.categorie === filtre)),
@@ -198,7 +203,7 @@ export function Gallery() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.8, ease: EASE }}
+              transition={{ duration: 0.7, ease: EASE }}
               className="eyebrow !text-gold-300 normal-case"
             >
               Galerie
@@ -209,7 +214,7 @@ export function Gallery() {
               initial={{ opacity: 0, y: 30, filter: 'blur(8px)' }}
               whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
               viewport={{ once: true }}
-              transition={{ duration: 1, delay: 0.1, ease: EASE }}
+              transition={{ duration: 0.75, delay: 0.05, ease: EASE }}
               className="mt-2 text-[clamp(1.55rem,min(2.9vw,5svh),2.9rem)] font-bold tracking-[0.03em] text-white lg:pl-[1.5vw]"
             >
               Nos dernières <span className="text-gold-300">réalisations.</span>
@@ -233,7 +238,7 @@ export function Gallery() {
                 initial={{ opacity: 0, y: 14 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.2 + rang * 0.06, ease: EASE }}
+                transition={{ duration: 0.55, delay: 0.1 + rang * 0.05, ease: EASE }}
                 className={cn(
                   'relative shrink-0 rounded-full border-2 px-5 py-1.5 text-sm transition-colors duration-300 lg:min-w-[13vw] lg:py-[0.55vw] lg:text-[clamp(0.85rem,1.2vw,1.1rem)]',
                   nom === 'Tous' && 'lg:min-w-[6.5vw]',
@@ -270,12 +275,7 @@ export function Gallery() {
                     transition={{ duration: 0.6, ease: EASE }}
                     className={cn('min-h-0', rang === 0 && 'col-span-2 lg:col-span-1 lg:row-span-2')}
                   >
-                    <Vignette
-                      video={video}
-                      grande={rang === 0}
-                      enContinu={rang === 0 && aLEcran && !fondSeul}
-                      onOuvrir={() => setOuverte(videos.indexOf(video))}
-                    />
+                    <Vignette video={video} grande={rang === 0} onOuvrir={() => setOuverte(videos.indexOf(video))} />
                   </motion.li>
                 ))}
               </AnimatePresence>

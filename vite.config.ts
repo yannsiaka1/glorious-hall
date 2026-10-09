@@ -1,8 +1,9 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
+import path from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-import { defineConfig, loadEnv, type Plugin } from 'vite'
+import { defineConfig, loadEnv, type Connect, type Logger, type Plugin } from 'vite'
 
 /**
  * Fichiers destinés aux moteurs de recherche, générés à partir du domaine
@@ -69,6 +70,98 @@ function prechargementPolices(): Plugin {
 }
 
 /**
+ * Contrôle des vidéos en développement (`npm run dev`) et en prévisualisation
+ * (`npm run preview`). Les vidéos sont livrées à part du code : si elles ne
+ * sont pas dans public/videos, Vite répond par la page d'accueil, la vidéo
+ * échoue sans aucun message et seule l'affiche reste visible. Ce plugin :
+ * - affiche au démarrage le bilan des vidéos et affiches de
+ *   src/content/videos.ts absentes du disque ;
+ * - répond 404 à un média absent et le nomme dans le terminal.
+ */
+function controleMedias(): Plugin {
+  const MEDIA = /^\/videos\/.+\.(mp4|webm|webp)$/
+
+  const repondre404 = (racine: string, journal: Logger): Connect.NextHandleFunction => {
+    const dejaSignales = new Set<string>()
+    return (requete, reponse, suivant) => {
+      let chemin: string
+      try {
+        chemin = decodeURIComponent((requete.url ?? '').split('?')[0] ?? '')
+      } catch {
+        return suivant()
+      }
+      const fichier = path.join(racine, chemin)
+      if (!MEDIA.test(chemin) || !fichier.startsWith(racine + path.sep) || existsSync(fichier)) return suivant()
+      if (!dejaSignales.has(chemin)) {
+        dejaSignales.add(chemin)
+        journal.warn(`Média introuvable : ${path.relative(process.cwd(), fichier)}`, { timestamp: true })
+      }
+      reponse.statusCode = 404
+      reponse.end()
+    }
+  }
+
+  return {
+    name: 'glorious-hall:medias',
+    configureServer(serveur) {
+      const { base, logger, publicDir } = serveur.config
+      serveur.middlewares.use(repondre404(publicDir, logger))
+
+      // Bilan à partir du catalogue réel (src/content/videos.ts) : toute
+      // chaîne d'un tableau exporté qui désigne un fichier de public/videos.
+      serveur.httpServer?.once('listening', () => {
+        setTimeout(async () => {
+          try {
+            const catalogue: Record<string, unknown> = await serveur.ssrLoadModule('/src/content/videos.ts')
+            const attendus = new Set<string>()
+            for (const liste of Object.values(catalogue)) {
+              if (!Array.isArray(liste)) continue
+              for (const element of liste) {
+                if (typeof element !== 'object' || element === null) continue
+                for (const valeur of Object.values(element)) {
+                  if (typeof valeur === 'string' && valeur.startsWith(`${base}videos/`)) {
+                    attendus.add(valeur.slice(base.length))
+                  }
+                }
+              }
+            }
+            const manquants = [...attendus].filter((chemin) => !existsSync(path.join(publicDir, chemin)))
+            const videos = [...attendus].filter((chemin) => chemin.endsWith('.mp4')).length
+            if (manquants.length === 0) {
+              logger.info(
+                `  Médias : ${videos} vidéos et ${attendus.size - videos} affiches présentes dans public/videos.`,
+              )
+              return
+            }
+            const parDossier = new Map<string, number>()
+            for (const chemin of manquants) {
+              const dossier = path.dirname(chemin)
+              parDossier.set(dossier, (parDossier.get(dossier) ?? 0) + 1)
+            }
+            logger.warn(
+              [
+                `\n  ${manquants.length} média(s) sur ${attendus.size} absent(s) du disque :`,
+                ...[...parDossier].map(
+                  ([dossier, nombre]) => `    public/${dossier}/ : ${nombre} fichier(s) manquant(s)`,
+                ),
+                '  Les vidéos sont livrées à part du code (archives glorious-hall-videos-*.zip) :',
+                '  voir README, section « Vidéos ».\n',
+              ].join('\n'),
+            )
+          } catch {
+            // Le bilan est une aide : il ne doit jamais gêner le démarrage.
+          }
+        }, 300)
+      })
+    },
+    configurePreviewServer(serveur) {
+      const racine = path.resolve(serveur.config.root, serveur.config.build.outDir)
+      serveur.middlewares.use(repondre404(racine, serveur.config.logger))
+    },
+  }
+}
+
+/**
  * Variables de construction :
  * - APERCU=1 : polices intégrées à la feuille de style (aperçu hébergé, qui
  *   n'accepte pas les fichiers de police séparés) ;
@@ -86,7 +179,13 @@ export default defineConfig(({ mode }) => {
     // Site servi à la racine du domaine. L'aperçu, lui, peut être servi depuis
     // un sous-dossier : chemins relatifs.
     base: apercu ? './' : '/',
-    plugins: [react(), tailwindcss(), fichiersReferencement(env['VITE_SITE_URL'] ?? ''), prechargementPolices()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      fichiersReferencement(env['VITE_SITE_URL'] ?? ''),
+      prechargementPolices(),
+      controleMedias(),
+    ],
     resolve: {
       alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
     },
