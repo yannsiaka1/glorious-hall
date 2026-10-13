@@ -61,7 +61,8 @@ export const galerie: VideoGalerie[] = [
   paysage('mariage-mairie', 'Mariage civil sur place', 'Mariage', 0.3, 85.5),
   paysage('anniversaire-60-ans', 'Anniversaire des 60 ans', 'Anniversaire', 0.3, 45),
   paysage('anniversaire-papillons', 'Anniversaire papillons', 'Anniversaire', 0.3, 53.4),
-  paysage('anniversaire-rose', 'Anniversaire en rose', 'Anniversaire', 0.3, 50),
+  // Un mariage, malgré le nom du fichier (gardé tel quel pour ne pas renommer les vidéos déjà en place).
+  paysage('anniversaire-rose', 'Mariage en rose', 'Mariage', 0.3, 50),
   paysage('ceremonie-exterieure', 'Cérémonie en extérieur', 'Extérieur', 0.3, 61),
   paysage('soiree-exterieure', 'Soirée sous chapiteau', 'Extérieur', 0.3, 41.6),
   paysage('reception-jardin', 'Réception au jardin', 'Extérieur', 0.3, 37.6),

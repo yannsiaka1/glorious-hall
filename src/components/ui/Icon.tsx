@@ -6,6 +6,7 @@ import {
   mdiCalendarBlank,
   mdiChefHat,
   mdiDiamondStone,
+  mdiFridge,
   mdiGlassCocktail,
   mdiHeartCircle,
   mdiHumanFemale,
@@ -20,6 +21,8 @@ import { useId, type ReactNode } from 'react'
 const TRACES = {
   agent: mdiAccountTieHat,
   calendrier: mdiCalendarBlank,
+  /** Cambuse : réserve des boissons, gardées au frais. */
+  cambuse: mdiFridge,
   cocktail: mdiGlassCocktail,
   coeur: mdiHeartCircle,
   diamant: mdiDiamondStone,
@@ -33,7 +36,7 @@ const TRACES = {
 } as const
 
 /** Pictogrammes dessinés pour le site, absents du jeu standard. */
-type Dessine = 'clim' | 'dj' | 'louche' | 'repere'
+type Dessine = 'clim' | 'dj' | 'repere'
 
 export type NomIcone = keyof typeof TRACES | Dessine
 
@@ -87,27 +90,6 @@ export function Icon({ nom, className = '' }: Props) {
           <path
             fillRule="evenodd"
             d="M4.4 13.8h15.2l2.3 7.7H2.1zM8.7 15.5a2 2 0 1 0 0 4a2 2 0 1 0 0-4zm6.6 0a2 2 0 1 0 0 4a2 2 0 1 0 0-4z"
-          />
-        </>,
-      )
-    // Louche fumante (cuisine)
-    case 'louche':
-      return svg(
-        <>
-          <path d="M1.8 12.2h11.6a5.8 5.8 0 0 1-11.6 0z" />
-          <path
-            d="M12.9 12.9c2.6.1 3.9-1.6 4.4-3.8l1.25-5.4a1.15 1.15 0 0 1 2.2.55l-.3 1.3"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-          />
-          <path
-            d="M4.4 9.8c-.9-1 .9-2 0-3.1s.9-2.1 0-3.1M7.5 9.8c-.9-1 .9-2 0-3.1s.9-2.1 0-3.1M10.6 9.8c-.9-1 .9-2 0-3.1s.9-2.1 0-3.1"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.25"
-            strokeLinecap="round"
           />
         </>,
       )

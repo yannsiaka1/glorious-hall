@@ -67,7 +67,8 @@ export function About() {
               </p>
               <p>
                 La <Gras>salle</Gras> allie confort, modernité et élégance, avec un <Gras>équipement</Gras> à la pointe
-                de la technologie (sonorisation, climatisation, cuisine équipée…) et un cadre <Gras>sécuritaire</Gras>.
+                de la technologie (sonorisation, climatisation, groupe électrogène…) et un cadre{' '}
+                <Gras>sécuritaire</Gras>.
               </p>
               <p>
                 Nous disposons également d’une <Gras>équipe</Gras> plus que qualifiée et dévouée pour faire de vos rêves

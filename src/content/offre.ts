@@ -8,8 +8,8 @@ import type { NomIcone } from '@/components/ui/Icon'
  */
 
 export const capacite = {
-  interieur: 120,
-  exterieur: 200,
+  interieur: 150,
+  exterieur: 170,
 } as const
 
 export const capaciteTotale = capacite.interieur + capacite.exterieur
@@ -20,7 +20,7 @@ export const atoutsHero: { icone: NomIcone; valeur: string; libelle: string }[] 
   { icone: 'repere', valeur: 'Douala,', libelle: 'Bonamoussadi' },
   { icone: 'calendrier', valeur: '+100', libelle: 'événements' },
   { icone: 'sono', valeur: 'Sonorisation', libelle: 'intégrée' },
-  { icone: 'diamant', valeur: 'Modernité', libelle: 'wifi, clim, cuisine' },
+  { icone: 'diamant', valeur: 'Modernité', libelle: 'wifi, clim, cambuse' },
 ]
 
 /**
@@ -32,9 +32,9 @@ export type Prestation = { icone: NomIcone; libelle: readonly string[] }
 export const inclus: Prestation[] = [
   { icone: 'clim', libelle: ['Salle', 'climatisée'] },
   { icone: 'eclair', libelle: ['Groupe', 'électrogène'] },
-  { icone: 'agent', libelle: ['Agents', 'de sécurité'] },
+  { icone: 'agent', libelle: ['Agents', 'de parking'] },
   { icone: 'dj', libelle: ['DJ &', 'sonorisation'] },
-  { icone: 'louche', libelle: ['Cuisine', 'moderne'] },
+  { icone: 'cambuse', libelle: ['Cambuse'] },
 ]
 
 export const options: Prestation[] = [

@@ -37,7 +37,7 @@ le cache et les en-têtes de sécurité.
 src/
 ├── content/              Tout l'éditorial : textes, coordonnées, vidéos, avis
 │   ├── site.ts           Identité, coordonnées, navigation
-│   ├── offre.ts          Capacité (120 + 200 = 320), atouts, prestations, chiffres
+│   ├── offre.ts          Capacité (150 + 170 = 320), atouts, prestations, chiffres
 │   ├── services.ts       Diapositives « Nos services »
 │   ├── videos.ts         Vidéos du hero (paysage / portrait) et de la galerie
 │   └── avis.ts           Avis (exemples à remplacer)
