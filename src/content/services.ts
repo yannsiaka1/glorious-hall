@@ -105,11 +105,11 @@ export const services: Service[] = [
   {
     cle: 'cles-en-main',
     legende: 'On fait tout pour vous !',
-    sousLegende: ['Service clés en main'],
+    sousLegende: ['Service clé en main'],
     image: logoSombre,
     descriptionImage: 'Logo Glorious Hall',
     cadrage: 'contain',
-    titre: ['Une organisation', 'de [clés] en [main].'],
+    titre: ['Une organisation', '[clé] en [main].'],
     retraits: [0, 1.9],
     texte: 'Faites-nous part de vos rêves et voyez-les se réaliser, pour votre plus grand bonheur.',
     points: ['Organisation', 'Salle modulable selon vos besoins', 'Décoration', '0 % stress, 100 % plaisir'],

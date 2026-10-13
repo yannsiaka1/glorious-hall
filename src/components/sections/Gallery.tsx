@@ -69,7 +69,7 @@ function Vignette({ video, grande, onOuvrir }: VignetteProps) {
     >
       <img
         src={grande ? video.affiche : video.afficheReduite}
-        alt=""
+        alt={`${video.titre}, à Glorious Hall (Douala)`}
         loading="lazy"
         decoding="async"
         className={cn(
@@ -106,7 +106,7 @@ function Vignette({ video, grande, onOuvrir }: VignetteProps) {
           )}
         >
           {video.categorie}
-        </span>
+        </span>{' '}
         <span
           className={cn(
             'flex items-center gap-1 tracking-[0.08em]',

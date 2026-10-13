@@ -1,5 +1,5 @@
 import { motion, useTransform, type MotionValue } from 'motion/react'
-import { forwardRef } from 'react'
+import { forwardRef, Fragment } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import { EASE, EASE_DEVOILEMENT } from '@/lib/animation'
 import { inclus, options, type Prestation } from '@/content/offre'
@@ -48,10 +48,12 @@ function PrestationItem({
         <Icon nom={prestation.icone} className={cn('relative text-gold-300', TAILLES_ICONE[taille])} />
       </span>
       <span className="mt-1.5 text-[clamp(0.52rem,2.35vw,0.9rem)] leading-[1.15] font-bold tracking-[0.02em] text-gold-300 transition-colors duration-300 group-hover:text-gold-200 lg:mt-[calc(8*var(--u))] lg:text-[calc(28*var(--u))] lg:tracking-[0.14em]">
-        {prestation.libelle.map((ligne) => (
-          <span key={ligne} className="block lg:whitespace-nowrap">
-            {ligne}
-          </span>
+        {prestation.libelle.map((ligne, position) => (
+          <Fragment key={ligne}>
+            {/* Espace invisible entre les lignes : « DJ & sonorisation » pour les robots. */}
+            {position > 0 && ' '}
+            <span className="block lg:whitespace-nowrap">{ligne}</span>
+          </Fragment>
         ))}
       </span>
     </motion.li>
@@ -132,36 +134,24 @@ export const Offer = forwardRef<HTMLElement, Props>(function Offer({ recouvremen
             className="absolute inset-y-0 right-[4%] -left-8 rounded-r-[2.5rem] bg-[#050505] lg:right-[2.8%] lg:rounded-r-[calc(75*var(--u))]"
           />
 
-          {/* Ordinateur : disposition de la maquette */}
-          <div className="relative hidden lg:block lg:h-[calc(577*var(--u))]">
+          {/*
+            Un seul bloc pour tous les écrans (pas de copie que les robots
+            liraient en double). Téléphone et tablette : trois rangées dans le
+            cadre. Ordinateur (lg) : positions de la maquette.
+          */}
+          <div className="relative max-lg:space-y-[clamp(0.75rem,3.2svh,1.75rem)] max-lg:py-[clamp(1rem,3svh,2rem)] max-lg:pr-[calc(4%+0.9rem)] max-lg:pl-[clamp(0.9rem,3.6vw,var(--gutter))] lg:h-[calc(577*var(--u))]">
             <h3 className="sr-only">Inclus avec la salle</h3>
-            <ul className="absolute top-[calc(45*var(--u))] left-[10.3%] grid w-[80%] grid-cols-5">
+            <ul className="grid grid-cols-5 gap-x-1 lg:absolute lg:top-[calc(45*var(--u))] lg:left-[10.3%] lg:w-[80%] lg:gap-x-0">
               {inclus.map((prestation, rang) => (
                 <PrestationItem key={prestation.icone} prestation={prestation} rang={rang} taille="grande" />
               ))}
             </ul>
-            <h3 className="absolute top-[calc(262*var(--u))] left-[10.6%] text-[calc(30*var(--u))] font-bold text-white">
+            <h3 className="text-[clamp(0.85rem,3.6vw,1.1rem)] font-bold text-white lg:absolute lg:top-[calc(262*var(--u))] lg:left-[10.6%] lg:text-[calc(30*var(--u))]">
               En option
             </h3>
-            <ul className="absolute top-[calc(325*var(--u))] left-[8%] grid w-[85%] grid-cols-6">
+            <ul className="grid grid-cols-6 gap-x-1 lg:absolute lg:top-[calc(325*var(--u))] lg:left-[8%] lg:w-[85%] lg:gap-x-0">
               {options.map((prestation, rang) => (
                 <PrestationItem key={prestation.icone} prestation={prestation} rang={rang + 5} taille="petite" />
-              ))}
-            </ul>
-          </div>
-
-          {/* Téléphone et tablette : trois rangées contenues dans le cadre */}
-          <div className="relative space-y-[clamp(0.75rem,3.2svh,1.75rem)] py-[clamp(1rem,3svh,2rem)] pr-[calc(4%+0.9rem)] pl-[clamp(0.9rem,3.6vw,var(--gutter))] lg:hidden">
-            <h3 className="sr-only">Inclus avec la salle</h3>
-            <ul className="grid grid-cols-5 gap-x-1">
-              {inclus.map((prestation, rang) => (
-                <PrestationItem key={prestation.icone} prestation={prestation} rang={rang} taille="grande" />
-              ))}
-            </ul>
-            <h3 className="text-[clamp(0.85rem,3.6vw,1.1rem)] font-bold text-white">En option</h3>
-            <ul className="grid grid-cols-6 gap-x-1">
-              {options.map((prestation, rang) => (
-                <PrestationItem key={prestation.icone} prestation={prestation} rang={rang} taille="petite" />
               ))}
             </ul>
           </div>

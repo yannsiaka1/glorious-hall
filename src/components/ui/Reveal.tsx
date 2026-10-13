@@ -32,6 +32,9 @@ export function Reveal({ delai = 0, y = 28, x = 0, flou = true, children, ...pro
 /**
  * Ligne de titre qui monte depuis un masque. L'observateur est posé sur le
  * parent : un élément entièrement masqué n'est jamais considéré « visible ».
+ *
+ * L'espace qui suit la ligne ne se voit pas (les lignes sont des blocs), mais
+ * il sépare les mots pour les robots qui lisent la page sans CSS.
  */
 export function MaskLine({
   children,
@@ -43,20 +46,22 @@ export function MaskLine({
   className?: string
 }) {
   return (
-    <motion.span
-      className={`block overflow-hidden pb-[0.1em] ${className}`}
-      initial="cache"
-      whileInView="visible"
-      viewport={{ once: true, margin: '0px 0px -10% 0px' }}
-    >
+    <>
       <motion.span
-        data-reveal
-        className="block"
-        variants={{ cache: { y: '110%' }, visible: { y: '0%' } }}
-        transition={{ duration: 1, delay: delai, ease: EASE }}
+        className={`block overflow-hidden pb-[0.1em] ${className}`}
+        initial="cache"
+        whileInView="visible"
+        viewport={{ once: true, margin: '0px 0px -10% 0px' }}
       >
-        {children}
-      </motion.span>
-    </motion.span>
+        <motion.span
+          data-reveal
+          className="block"
+          variants={{ cache: { y: '110%' }, visible: { y: '0%' } }}
+          transition={{ duration: 1, delay: delai, ease: EASE }}
+        >
+          {children}
+        </motion.span>
+      </motion.span>{' '}
+    </>
   )
 }

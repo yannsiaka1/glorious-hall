@@ -63,7 +63,12 @@ tout le contenu vit dans `src/content/`. Aucune couleur de la charte n'est écri
 - **Hero** : vidéos en fond, floutées. Écran en portrait (téléphone) : vidéos verticales, « 1 » et « 2 » d'abord ;
   sinon vidéos horizontales. Le bouton lecture passe en mode cinéma (flou retiré, son, textes masqués sauf le
   titre). Les textes suivent aussi la hauteur de l'écran : sur un portable où le navigateur laisse peu de hauteur,
-  ils rétrécissent et restent toujours sous l'en-tête.
+  ils rétrécissent et restent toujours sous l'en-tête. L'entrée du hero est animée en CSS (classes `hero-*` de
+  `src/styles/index.css`) : elle démarre dès l'affichage, sans attendre le JavaScript, ce qui accélère l'apparition
+  du titre sur mobile.
+- **Textes lisibles par les robots** : quand un texte est coupé en lignes (titres, libellés), un espace invisible
+  sépare les lignes, sinon les moteurs qui lisent la page sans CSS verraient des mots collés. Aucun texte n'est
+  écrit deux fois (une seule version de la section 2 pour tous les écrans, compteurs sans copie cachée).
 - **Vidéos** : lecture fiable sur iPhone et dans les navigateurs intégrés (WhatsApp, Facebook) : attribut `muted`
   posé dans le DOM et relance au premier geste si la lecture automatique est refusée (`src/lib/media.ts`).
 - **Galerie** : vignettes nettes à l'arrivée ; la vidéo ne joue qu'au survol de la souris (la grande vignette lit la

@@ -8,7 +8,7 @@ import {
   useTransform,
 } from 'motion/react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { useRef, useState, type CSSProperties } from 'react'
+import { Fragment, useRef, useState, type CSSProperties } from 'react'
 import branche from '@/assets/img/branche-doree.webp'
 import { Highlight } from '@/components/ui/Highlight'
 import { EASE } from '@/lib/animation'
@@ -49,31 +49,34 @@ function TexteService({ service, anime }: { service: Service; anime: boolean }) 
     <>
       <Titre className="text-[clamp(1.3rem,2.6vw,3.2rem)] leading-[1.18] font-bold text-ink lg:text-[clamp(1.3rem,min(2.6vw,4.4svh),3.2rem)]">
         {service.titre.map((ligne, rang) => (
-          <span
-            key={ligne}
-            className="block overflow-hidden pb-[0.06em]"
-            style={{ paddingLeft: `${service.retraits[rang] ?? 0}em` }}
-          >
-            {anime ? (
-              <motion.span
-                className="block"
-                variants={{
-                  cache: (sens: number) => ({ y: sens > 0 ? '110%' : '-110%' }),
-                  visible: { y: '0%', transition: { duration: 0.8, delay: 0.08 + rang * 0.08, ease: EASE } },
-                  sortie: (sens: number) => ({
-                    y: sens > 0 ? '-110%' : '110%',
-                    transition: { duration: 0.4, ease: [0.4, 0, 1, 1] },
-                  }),
-                }}
-              >
-                <Highlight texte={ligne} />
-              </motion.span>
-            ) : (
-              <span className="block">
-                <Highlight texte={ligne} />
-              </span>
-            )}
-          </span>
+          <Fragment key={ligne}>
+            {/* Espace invisible entre les lignes : les mots restent séparés pour les robots. */}
+            {rang > 0 && ' '}
+            <span
+              className="block overflow-hidden pb-[0.06em]"
+              style={{ paddingLeft: `${service.retraits[rang] ?? 0}em` }}
+            >
+              {anime ? (
+                <motion.span
+                  className="block"
+                  variants={{
+                    cache: (sens: number) => ({ y: sens > 0 ? '110%' : '-110%' }),
+                    visible: { y: '0%', transition: { duration: 0.8, delay: 0.08 + rang * 0.08, ease: EASE } },
+                    sortie: (sens: number) => ({
+                      y: sens > 0 ? '-110%' : '110%',
+                      transition: { duration: 0.4, ease: [0.4, 0, 1, 1] },
+                    }),
+                  }}
+                >
+                  <Highlight texte={ligne} />
+                </motion.span>
+              ) : (
+                <span className="block">
+                  <Highlight texte={ligne} />
+                </span>
+              )}
+            </span>
+          </Fragment>
         ))}
       </Titre>
       {anime ? (

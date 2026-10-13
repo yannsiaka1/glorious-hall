@@ -9,7 +9,9 @@ const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : us
  *
  * Le prérendu affiche la valeur finale (lisible par les moteurs de recherche
  * et sans JavaScript) ; dans le navigateur, le compteur repart de 0 avant la
- * première peinture, puis s'anime à son entrée dans l'écran.
+ * première peinture, puis s'anime à son entrée dans l'écran. Le nombre n'est
+ * écrit qu'une fois dans la page : pas de copie cachée que les robots liraient
+ * en double (« 150150 »).
  */
 export function Counter({ valeur, suffixe = '' }: { valeur: number; suffixe?: string }) {
   const ref = useRef<HTMLSpanElement>(null)
@@ -30,14 +32,8 @@ export function Counter({ valeur, suffixe = '' }: { valeur: number; suffixe?: st
 
   return (
     <span ref={ref}>
-      <span aria-hidden="true">
-        <motion.span>{arrondi}</motion.span>
-        {suffixe}
-      </span>
-      <span className="sr-only">
-        {valeur}
-        {suffixe}
-      </span>
+      <motion.span>{arrondi}</motion.span>
+      {suffixe}
     </span>
   )
 }

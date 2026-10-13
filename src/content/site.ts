@@ -19,7 +19,7 @@ export const site = {
   url: import.meta.env.VITE_SITE_URL.replace(/\/$/, ''),
   description:
     'Glorious Hall, salle événementielle à Bonamoussadi, Douala : mariages, anniversaires, séminaires et réceptions. ' +
-    'Salle climatisée et sonorisée, espace extérieur, décoration et organisation clés en main.',
+    'Salle climatisée et sonorisée, espace extérieur, décoration et organisation clé en main.',
 } as const
 
 export const contact = {
@@ -30,16 +30,19 @@ export const contact = {
   ],
   courriel: 'info@glorioushall.com',
   adresse: {
-    rue: 'Carrefour Témoin, entrée après celle du Yapaki Prestige',
+    rue: 'Carrefour Témoin',
     quartier: 'Bonamoussadi',
     ville: 'Douala',
     region: 'Littoral',
     pays: 'CM',
   },
-  /** Adresse sur une ligne (section contact). */
-  adresseComplete: 'Bonamoussadi, Carrefour Témoin, entrée après celle du Yapaki Prestige',
-  /** Adresse courte (pied de page). */
-  adresseCourte: 'Rond-point Carrefour Témoin, entrée après celle du Yapaki Prestige.',
+  /**
+   * Adresse sur une ligne, écrite exactement comme sur la fiche Google : pour
+   * le référencement local, elle doit être identique partout.
+   */
+  adresseComplete: 'Carrefour Témoin, Bonamoussadi, Douala',
+  /** Indication d'accès, toujours affichée à part (Google la refuse dans l'adresse). */
+  acces: 'Entrée après celle du Yapaki Prestige',
   plan: 'https://www.google.com/maps/search/?api=1&query=Carrefour+T%C3%A9moin+Bonamoussadi+Douala',
 } as const
 

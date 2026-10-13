@@ -31,8 +31,9 @@ export function StructuredData() {
         email: contact.courriel,
         address: {
           '@type': 'PostalAddress',
-          streetAddress: contact.adresse.rue,
-          addressLocality: `${contact.adresse.quartier}, ${contact.adresse.ville}`,
+          // Même découpage que la fiche Google : « Carrefour Témoin, Bonamoussadi » à Douala.
+          streetAddress: `${contact.adresse.rue}, ${contact.adresse.quartier}`,
+          addressLocality: contact.adresse.ville,
           addressRegion: contact.adresse.region,
           addressCountry: contact.adresse.pays,
         },

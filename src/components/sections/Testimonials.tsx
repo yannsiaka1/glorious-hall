@@ -156,7 +156,7 @@ export function Testimonials() {
                     <span className="mx-auto block h-px w-24 bg-gold-300 lg:w-[9.5vw]" />
                     <span className="mt-4 block font-roman text-[clamp(0.95rem,1.4vw,1.3rem)] tracking-[0.08em] text-ink uppercase lg:mt-[1.6vw]">
                       {courant.auteur}
-                    </span>
+                    </span>{' '}
                     <span className="font-roman text-[clamp(0.8rem,1.15vw,1.05rem)] text-ink/70">{courant.source}</span>
                   </figcaption>
                 </motion.figure>

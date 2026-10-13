@@ -20,7 +20,7 @@ export const atoutsHero: { icone: NomIcone; valeur: string; libelle: string }[] 
   { icone: 'repere', valeur: 'Douala,', libelle: 'Bonamoussadi' },
   { icone: 'calendrier', valeur: '+100', libelle: 'événements' },
   { icone: 'sono', valeur: 'Sonorisation', libelle: 'intégrée' },
-  { icone: 'diamant', valeur: 'Modernité', libelle: 'wifi, clim, cambuse' },
+  { icone: 'diamant', valeur: 'Modernité', libelle: 'Wi-Fi, climatisation & cambuse' },
 ]
 
 /**

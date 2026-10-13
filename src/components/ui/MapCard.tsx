@@ -84,8 +84,7 @@ export function MapCard({ className }: { className?: string }) {
         </g>
       </svg>
       <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-lg bg-[#9a6a2e]/95 px-3 py-1.5 text-center text-[0.68rem] leading-tight font-bold whitespace-nowrap text-white shadow-lg">
-        Entrée après celle
-        <br />
+        Entrée après celle <br />
         du Yapaki Prestige
       </span>
     </a>

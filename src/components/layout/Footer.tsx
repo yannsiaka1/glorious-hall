@@ -1,5 +1,6 @@
 import { motion } from 'motion/react'
 import { ArrowRight, ChevronRight, Headphones, Mail, MapPin, Phone } from 'lucide-react'
+import { Fragment } from 'react'
 import logo from '@/assets/img/logo-clair.webp'
 import feuillesDroite from '@/assets/img/pied-feuilles-d.webp'
 import feuillesGauche from '@/assets/img/pied-feuilles-g.webp'
@@ -66,10 +67,8 @@ export function Footer() {
           </p>
           <span className="mx-auto mt-4 block h-px w-24 bg-gold-300/70" />
           <p className="mt-4 font-script text-[clamp(1.8rem,2.05vw,2.2rem)] leading-[1.25] text-gold-300">
-            Le lieu où vos
-            <br />
-            meilleurs souvenirs
-            <br />
+            Le lieu où vos <br />
+            meilleurs souvenirs <br />
             prennent vie.
           </p>
           <span className="mx-auto mt-4 block h-px w-24 bg-gold-300/70" />
@@ -131,15 +130,20 @@ export function Footer() {
             <ul className="mt-6 space-y-4 text-[0.9rem] text-white/90">
               <li className="flex gap-3">
                 <MapPin className="mt-0.5 h-6 w-6 shrink-0 fill-gold-300 text-black" aria-hidden="true" />
-                {contact.adresseCourte}
+                <span>
+                  {contact.adresseComplete}. <span className="block">{contact.acces}.</span>
+                </span>
               </li>
               <li className="flex gap-3">
                 <Phone className="mt-0.5 h-6 w-6 shrink-0 fill-gold-300 text-gold-300" aria-hidden="true" />
                 <span className="flex flex-col">
-                  {contact.telephones.map((telephone) => (
-                    <a key={telephone.lien} href={telephone.lien} className="hover:text-gold-300">
-                      {telephone.libelle}
-                    </a>
+                  {contact.telephones.map((telephone, rang) => (
+                    <Fragment key={telephone.lien}>
+                      {rang > 0 && ' '}
+                      <a href={telephone.lien} className="hover:text-gold-300">
+                        {telephone.libelle}
+                      </a>
+                    </Fragment>
                   ))}
                 </span>
               </li>
@@ -165,7 +169,7 @@ export function Footer() {
               <MapPin className="h-4 w-4 shrink-0 fill-white" aria-hidden="true" />
               <span className="whitespace-nowrap">Voir sur Google Maps</span>
               <ArrowRight className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            </a>
+            </a>{' '}
             <a
               href={contact.whatsapp}
               target="_blank"

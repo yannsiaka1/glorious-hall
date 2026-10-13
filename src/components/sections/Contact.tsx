@@ -1,5 +1,6 @@
 import { motion } from 'motion/react'
 import { Mail, MapPin, MessageCircle, Phone } from 'lucide-react'
+import { Fragment } from 'react'
 import logo from '@/assets/img/logo-sombre.webp'
 import oiseaux from '@/assets/img/oiseaux-cristal.webp'
 import { MapCard } from '@/components/ui/MapCard'
@@ -45,13 +46,11 @@ export function Contact() {
           className="relative flex h-full w-[90%] flex-col justify-center [border-top-right-radius:38vw_100%] bg-sand py-12 pr-10 pl-[var(--gutter)] sm:w-[80%] lg:w-[83%] lg:[border-top-right-radius:20vw_92%] lg:py-0 lg:pr-[3vw]"
         >
           <h2 id="contact-titre" className="text-[clamp(1.4rem,1.75vw,1.95rem)] leading-[1.15] font-bold text-ink">
-            Prêt à organiser
-            <br />
+            Prêt à organiser <br />
             votre événement ?
           </h2>
           <p className="mt-3 text-[clamp(1.02rem,1.2vw,1.3rem)] leading-snug font-bold text-white [text-shadow:0_1px_2px_rgb(122_90_28/0.35)] lg:mt-[1vw]">
-            Donnez-nous plus de détails
-            <br />
+            Donnez-nous plus de détails <br />
             dès maintenant.
           </p>
           <p className="mt-3 max-w-[24rem] text-[clamp(0.8rem,0.92vw,0.98rem)] leading-snug font-bold text-[#5a4416] lg:mt-[1.2vw] lg:max-w-[25vw]">
@@ -81,15 +80,20 @@ export function Contact() {
             <ul className="mt-4 space-y-3 text-[clamp(0.84rem,1vw,1rem)] leading-snug text-ink lg:mt-[1.1vw] lg:space-y-[0.9vw]">
               <li className="flex gap-3">
                 <MapPin className="mt-0.5 h-5 w-5 shrink-0 fill-[#5a3424] text-[#f6ecdf]" aria-hidden="true" />
-                {contact.adresseComplete}.
+                <span>
+                  {contact.adresseComplete}. <span className="block">{contact.acces}.</span>
+                </span>
               </li>
               <li className="flex gap-3">
                 <Phone className="mt-0.5 h-5 w-5 shrink-0 fill-[#5a3424] text-[#5a3424]" aria-hidden="true" />
                 <span className="flex flex-col">
-                  {contact.telephones.map((telephone) => (
-                    <a key={telephone.lien} href={telephone.lien} className="transition-colors hover:text-gold-600">
-                      {telephone.libelle}
-                    </a>
+                  {contact.telephones.map((telephone, rang) => (
+                    <Fragment key={telephone.lien}>
+                      {rang > 0 && ' '}
+                      <a href={telephone.lien} className="transition-colors hover:text-gold-600">
+                        {telephone.libelle}
+                      </a>
+                    </Fragment>
                   ))}
                 </span>
               </li>
