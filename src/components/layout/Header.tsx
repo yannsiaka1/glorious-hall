@@ -1,20 +1,43 @@
 import { BookOpen } from 'lucide-react'
-import { useEffect, useState, type MouseEvent } from 'react'
+import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import logoClair from '@/assets/img/logo-clair.webp'
 import logoSombre from '@/assets/img/logo-sombre.webp'
 import { contact, navigation, site, type SectionId } from '@/content/site'
 import { cn } from '@/lib/cn'
 import { useDefileur } from '@/lib/defileur'
+import { dansZoneEtapes, enCoursDePas } from '@/lib/steps'
 
 /** Ligne de lecture : la section active est celle qui passe sous ce point de l'écran. */
 const LIGNE_SECTION_ACTIVE = 0.4
+/**
+ * Distance parcourue dans un même sens (px) avant que l'en-tête se cache ou
+ * revienne : en dessous, les petits à-coups du défilement fluide le feraient
+ * clignoter.
+ */
+const SEUIL_SENS = 12
+/** Durée la plus longue d'un trajet lancé depuis la navigation (voir SmoothScroll), plus une marge (ms). */
+const DUREE_TRAJET_NAVIGATION = 1800
 
 /**
- * En-tête repris de Precious : toujours visible, hauteur et logo fixes.
+ * En-tête repris de Precious : même hauteur, même logo, même voile.
  * - En haut de page : fond transparent sur le hero.
  * - Au défilement : voile translucide flouté. Sa teinte suit la section placée
  *   dessous (`data-theme` sombre ou clair) pour que les liens restent lisibles.
  * - L'onglet de la section à l'écran reste doré et souligné.
+ *
+ * Il se retire quand on descend dans la partie libre de la page, et revient
+ * dès qu'on remonte. Sur Precious, la page défile librement et ne passe sous
+ * l'en-tête qu'un instant. Ici, la fin de page (À propos, Avis, Contact) se
+ * lit en défilant, et un en-tête de 96 à 128 px, translucide, couvrait en
+ * permanence les titres, les textes et les chiffres qui passaient dessous.
+ *
+ * Il reste en place :
+ * - dans les zones à étapes (hero, services, galerie) : chaque section y
+ *   réserve sa place en haut, il ne cache donc rien, et remonter d'un geste y
+ *   change de section, il ne pourrait pas revenir ;
+ * - pendant un pas, en haut de page, quand le menu est ouvert, quand le
+ *   clavier est dans l'en-tête, et pendant un trajet lancé depuis la
+ *   navigation.
  */
 export function Header() {
   const defileur = useDefileur()
@@ -22,10 +45,44 @@ export function Header() {
   const [ouvert, setOuvert] = useState(false)
   const [defile, setDefile] = useState(false)
   const [theme, setTheme] = useState<'sombre' | 'clair'>('sombre')
+  const [retire, setRetire] = useState(false)
+  /** Fin du trajet lancé depuis la navigation (horodatage `performance.now()`). */
+  const finTrajet = useRef(0)
+  /** Chemin parcouru dans le sens courant (px, positif vers le bas). */
+  const cumul = useRef(0)
+
+  /**
+   * Fait revenir l'en-tête pour une autre raison que le défilement (clavier,
+   * navigation) : le chemin déjà parcouru vers le bas est oublié, sinon le
+   * prochain événement de défilement le retirerait aussitôt.
+   */
+  const montrer = () => {
+    cumul.current = 0
+    setRetire(false)
+  }
 
   useEffect(() => {
+    let dernierY = window.scrollY
+
     const mettreAJour = () => {
-      setDefile(window.scrollY > 24)
+      const y = window.scrollY
+      setDefile(y > 24)
+
+      // Retrait au défilement : on cumule le chemin parcouru dans un même sens.
+      // Un événement sans mouvement (redimensionnement, lissage) ne décide rien.
+      const ecart = y - dernierY
+      dernierY = y
+      if (ecart !== 0) {
+        if (Math.sign(ecart) !== Math.sign(cumul.current)) cumul.current = 0
+        cumul.current += ecart
+      }
+      if (y <= 24 || dansZoneEtapes(y) || enCoursDePas() || performance.now() < finTrajet.current) {
+        setRetire(false)
+      } else if (ecart !== 0 && cumul.current > SEUIL_SENS) {
+        setRetire(true)
+      } else if (ecart !== 0 && cumul.current < -SEUIL_SENS) {
+        setRetire(false)
+      }
 
       // Teinte : celle de la section qui passe sous l'en-tête.
       const sonde = window.innerWidth >= 1024 ? 64 : 48
@@ -68,17 +125,25 @@ export function Header() {
 
   const clair = theme === 'clair'
   const voile = defile || ouvert
+  const cache = retire && !ouvert
 
   const allerA = (id: SectionId) => (evenement: MouseEvent) => {
     evenement.preventDefault()
     setOuvert(false)
+    // Le trajet descend souvent : sans cette marge, l'en-tête se retirerait
+    // pendant qu'il emmène le visiteur là où il l'a demandé.
+    finTrajet.current = performance.now() + DUREE_TRAJET_NAVIGATION
+    montrer()
     defileur.allerA(id)
   }
 
   return (
     <header
+      // Au clavier, la tabulation qui entre dans l'en-tête le fait revenir.
+      onFocus={montrer}
       className={cn(
-        'fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top,0px)] transition-[background-color,backdrop-filter,box-shadow,color] duration-300',
+        'fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top,0px)] transition-[background-color,backdrop-filter,box-shadow,color,translate] duration-300 ease-(--ease-lux)',
+        cache && '-translate-y-full',
         voile && clair && 'bg-cream/70 shadow-[0_1px_0_rgba(20,20,18,0.08)] backdrop-blur-xl backdrop-saturate-150',
         voile &&
           !clair &&

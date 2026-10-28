@@ -75,6 +75,10 @@ tout le contenu vit dans `src/content/`. Aucune couleur de la charte n'est écri
   vidéo complète, plus nette que l'aperçu de 6 s). En fond, le logo vectorisé (net à toutes les tailles) s'anime —
   la signature s'écrit, l'arbre pousse puis se balance au vent, des feuilles d'or s'en détachent, un reflet glisse
   sur le G et le H.
+- **En-tête** : repris de Precious (hauteur, logo, voile dont la teinte suit la section placée dessous). Toujours
+  visible dans les zones à étapes, où chaque section lui réserve sa place. Dans la partie libre de la page (À propos,
+  Avis, Contact), il se retire quand on descend, pour ne pas couvrir ce qu'on lit, et revient dès qu'on remonte, au
+  clavier, ou pendant un trajet lancé depuis la navigation.
 - **Accessibilité** : réglage « réduire les animations » respecté, fenêtre vidéo native (`<dialog>`), focus
   visible, carrousel d'avis conforme aux recommandations WAI-ARIA, contenu lisible sans JavaScript.
 
