@@ -15,6 +15,24 @@ const PAUSE_ARRIVEE = 900
 /** Nombre de vignettes affichées pour un filtre. */
 const VIGNETTES = 5
 
+/**
+ * Largeur d'affichage réelle des petites vignettes, annoncée au navigateur
+ * (`sizes`) pour qu'il choisisse la bonne affiche.
+ *
+ * Les vignettes sont presque carrées, les affiches en 16:9. En `object-cover`,
+ * l'image prend la hauteur de la vignette et déborde sur les côtés : sa largeur
+ * affichée vaut la hauteur × 16/9, bien plus que la largeur de la vignette.
+ * Valeurs relevées sur la mise en page, de 360 à 2560 px de large : 61 à 80vw
+ * sur téléphone, environ 49vw sur tablette, 24 à 33vw sur ordinateur.
+ *
+ * C'est la principale cause mesurée du flou signalé : sur un écran à haute
+ * densité (tous les téléphones récents, les écrans Retina), la vignette de
+ * 520 px était agrandie 1,7 à 2 fois par le navigateur. Avec cette annonce, il
+ * prend l'affiche de 960 px dès que l'écran en a besoin, et garde la petite
+ * sur les écrans classiques, où elle suffit.
+ */
+const TAILLES_PETITE_VIGNETTE = '(min-width: 1024px) 32vw, (min-width: 768px) 50vw, 78vw'
+
 const nombreParCategorie = galerie.reduce<Record<string, number>>((total, video) => {
   total[video.categorie] = (total[video.categorie] ?? 0) + 1
   return total
@@ -36,6 +54,10 @@ type VignetteProps = {
  * - Les petites vignettes lisent l'aperçu de 6 s (520 px de large). La grande
  *   lit la vidéo elle-même : l'aperçu, agrandi à sa taille, paraîtrait flou à
  *   côté de son affiche de 960 px.
+ * - Les petites vignettes proposent deux affiches, 520 et 960 px (au moins :
+ *   voir scripts/encoder-video.sh) ; le navigateur prend celle qu'il faut
+ *   pour l'écran (voir TAILLES_PETITE_VIGNETTE). La grande a toujours besoin
+ *   de la plus grande.
  */
 function Vignette({ video, grande, onOuvrir }: VignetteProps) {
   const apercu = useRef<HTMLVideoElement>(null)
@@ -69,6 +91,8 @@ function Vignette({ video, grande, onOuvrir }: VignetteProps) {
     >
       <img
         src={grande ? video.affiche : video.afficheReduite}
+        srcSet={grande ? undefined : `${video.afficheReduite} 520w, ${video.affiche} 960w`}
+        sizes={grande ? undefined : TAILLES_PETITE_VIGNETTE}
         alt={`${video.titre}, à Glorious Hall (Douala)`}
         loading="lazy"
         decoding="async"
