@@ -26,7 +26,7 @@ npm run typecheck    # TypeScript strict
 npm run format       # Prettier (+ tri des classes Tailwind)
 ```
 
-Les vidéos sont livrées à part du code : voir la section [Vidéos](#vidéos) pour les installer.
+Les vidéos sont dans le dépôt, sous `public/videos/` : voir la section [Vidéos](#vidéos).
 
 Node 20.19 ou plus. Déploiement Vercel : `vercel.json` fixe la commande (`npm run build`), le dossier (`dist`),
 le cache et les en-têtes de sécurité.
@@ -60,8 +60,9 @@ tout le contenu vit dans `src/content/`. Aucune couleur de la charte n'est écri
   un cran → logo seul → « À propos » en un cran → défilement libre. Les crans suivants d'un même geste sont
   absorbés. À l'arrivée sur la galerie, rien ne bouge avant un nouveau geste : la fin du geste d'arrivée (inertie
   d'un pavé tactile) ne compte pas.
-- **Hero** : vidéos en fond, floutées. Écran en portrait (téléphone) : vidéos verticales, « 1 » et « 2 » d'abord ;
-  sinon vidéos horizontales. Le bouton lecture passe en mode cinéma (flou retiré, son, textes masqués sauf le
+- **Hero** : vidéos en fond, floutées. Écran en portrait (téléphone) : vidéos verticales ; sinon vidéos
+  horizontales, dans les deux cas de la plus nette à la moins nette (classement expliqué dans
+  `src/content/videos.ts`). Le bouton lecture passe en mode cinéma (flou retiré, son, textes masqués sauf le
   titre). Les textes suivent aussi la hauteur de l'écran : sur un portable où le navigateur laisse peu de hauteur,
   ils rétrécissent et restent toujours sous l'en-tête. L'entrée du hero est animée en CSS (classes `hero-*` de
   `src/styles/index.css`) : elle démarre dès l'affichage, sans attendre le JavaScript, ce qui accélère l'apparition
@@ -92,43 +93,43 @@ données structurées, `robots.txt` et `sitemap.xml`.
 
 ## Vidéos
 
-Trop lourdes pour l'archive du code (environ 115 Mo), les vidéos sont livrées dans des archives à part,
-`glorious-hall-videos-*.zip`. Chacune contient déjà le chemin complet `glorious-hall/public/videos/…`. Le site
-attend cette organisation :
+Les vidéos sont suivies dans le dépôt (environ 147 Mo), déjà encodées pour le web :
 
 ```
 public/videos/
-├── paysage/     11 vidéos horizontales : hero sur ordinateur, galerie, visionneuse
-├── apercus/     11 extraits muets de 6 s, joués au survol des vignettes de la galerie
-├── portrait/     9 vidéos verticales : hero sur téléphone (écran en portrait)
-└── affiches/    images affichées avant la lecture (livrées avec le code)
+├── paysage/     13 vidéos horizontales : hero sur ordinateur, galerie, visionneuse
+├── apercus/     13 extraits muets de 6 s, joués au survol des vignettes de la galerie
+├── portrait/    11 vidéos verticales : hero sur téléphone (écran en portrait)
+└── affiches/    images affichées avant la lecture
     ├── paysage/
     └── portrait/
 ```
 
-**Installation :** placer les archives dans le dossier qui _contient_ `glorious-hall/` (pas à l'intérieur), puis les
-extraire toutes au même endroit en fusionnant les dossiers :
-
-```bash
-# Windows (PowerShell)
-Get-ChildItem glorious-hall-videos-*.zip | ForEach-Object { Expand-Archive -LiteralPath $_.FullName -DestinationPath . -Force }
-# macOS / Linux
-for z in glorious-hall-videos-*.zip; do unzip -o "$z"; done
-```
-
-**Vérification :** au démarrage, `npm run dev` affiche « Médias : 31 vidéos et 31 affiches présentes dans
+**Vérification :** au démarrage, `npm run dev` affiche « Médias : 37 vidéos et 37 affiches présentes dans
 public/videos. », ou la liste des dossiers où il manque des fichiers. Une vidéo absente reçoit une erreur 404 et son
 chemin s'affiche dans le terminal. Sans les vidéos, le site montre les affiches fixes à leur place.
 
 ### Ajouter ou remplacer une vidéo
 
+Toujours à partir du fichier d'origine, le plus fidèle possible : une vidéo envoyée _en tant que fichier_ sur
+WhatsApp, pas en tant que vidéo, qui est recompressée à l'envoi.
+
 ```bash
 scripts/encoder-video.sh ~/Téléchargements/ma-video.mp4 mon-slug paysage 4   # 4 = seconde de l'affiche
 scripts/encoder-video.sh ~/Téléchargements/ma-video.mp4 mon-slug portrait 2
+# Source avec des bandes noires : zone utile à garder (largeur:hauteur:x:y)
+RECADRAGE=640:278:0:38 scripts/encoder-video.sh source.mp4 mon-slug paysage 3
 ```
 
+Les deux formats ne sont pas encodés pareil, parce qu'ils ne sont pas vus de la même façon : les horizontales
+(galerie, visionneuse, mode cinéma) jusqu'à 1280 px et en qualité haute ; les verticales (fond flouté du hero sur
+téléphone, chargé en données mobiles) à 960 px de haut et en qualité plus légère. Le détail des réglages et leurs
+mesures est en tête du script.
+
 Puis déclarer la vidéo dans `src/content/videos.ts` (`galerie`, `heroPaysage` ou `heroPortrait`), avec `debut` et
-`fin` : la seconde où le hero passe à la vidéo suivante (avant un générique ou un fondu au noir).
+`fin` : la seconde où le hero passe à la vidéo suivante (avant un générique ou un fondu au noir). La placer **à son
+rang de qualité**, pas en fin de liste : les listes vont de la plus nette à la moins nette, et la galerie comme le
+hero montrent d'abord leurs premières vidéos.
 
 ### Héberger les vidéos ailleurs
 

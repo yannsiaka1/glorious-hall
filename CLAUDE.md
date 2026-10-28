@@ -63,8 +63,11 @@ tels à l'écran : ils le restent tant qu'ils n'ont pas été remplacés par de
 vrais avis, donnés avec l'accord de leurs auteurs.
 
 **Une nouvelle vidéo passe par `scripts/encoder-video.sh`**, puis se déclare
-dans `src/content/videos.ts` avec son `debut` et sa `fin`. Le hero joue les
-vidéos `portrait/` sur un écran en portrait, `paysage/` sinon.
+dans `src/content/videos.ts` avec son `debut` et sa `fin`, **à son rang de
+qualité** : les listes vont de la plus nette à la moins nette (méthode en tête
+des listes). Le hero joue les vidéos `portrait/` sur un écran en portrait,
+`paysage/` sinon. Toujours encoder depuis le fichier d'origine : réencoder une
+vidéo déjà en ligne ne fait que perdre du détail.
 
 **Les textes restent lisibles par les robots.** Quand un texte est coupé en
 lignes, un espace invisible sépare les lignes ; aucun texte n'est écrit deux
@@ -96,11 +99,11 @@ npm run format:check   # rien a reformater
 - Les avis sont des exemples (`src/content/avis.ts`), à remplacer par de vrais
   avis clients.
 - Mentions légales et politique de confidentialité : à rédiger.
-- La section « Vidéos » du `README.md` est dépassée : elle décrit des vidéos
-  livrées dans des archives à part, alors qu'elles sont désormais suivies dans
-  le dépôt (62 fichiers, environ 115 Mo).
-- Deux vidéos du hero sur téléphone, `anniversaire-baby-boss` et
-  `mariage-vert-blanc`, portent le filigrane du décorateur.
+- Trois vidéos du hero sur téléphone portent un filigrane :
+  `anniversaire-baby-boss` et `mariage-vert-blanc` celui du décorateur,
+  `seminaire-entreprise` celui de l'application CapCut. Elles sont classées en
+  dernier. Les retirer par recadrage est possible, mais le filigrane du
+  décorateur est sa signature : à n'enlever qu'avec son accord.
 - `.env` est suivi par git. Il ne contient que le domaine public ; aucun
   secret ne doit y entrer.
 - Aucun test automatisé, aucune vérification automatique sur les PR.
