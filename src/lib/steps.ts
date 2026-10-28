@@ -69,6 +69,21 @@ export function enCoursDePas(): boolean {
   return performance.now() < verrouJusqua
 }
 
+/**
+ * Vrai si la position `y` est dans une zone à étapes, bords compris : là, un
+ * geste vers le haut ou vers le bas change de section entière, et chaque
+ * section réserve en haut la place de l'en-tête.
+ */
+export function dansZoneEtapes(y: number): boolean {
+  for (const zone of zones.values()) {
+    const arrets = zone.arrets()
+    const premier = arrets[0]
+    const dernier = arrets[arrets.length - 1]
+    if (premier && dernier && y >= premier.y - TOLERANCE && y <= dernier.y + TOLERANCE) return true
+  }
+  return false
+}
+
 /** Position d'un élément dans le document, indépendante du défilement courant. */
 export function hautDansDocument(element: Element): number {
   return element.getBoundingClientRect().top + window.scrollY
