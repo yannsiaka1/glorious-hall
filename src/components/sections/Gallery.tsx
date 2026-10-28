@@ -15,6 +15,24 @@ const PAUSE_ARRIVEE = 900
 /** Nombre de vignettes affichées pour un filtre. */
 const VIGNETTES = 5
 
+/**
+ * Largeur d'affichage réelle des petites vignettes, annoncée au navigateur
+ * (`sizes`) pour qu'il choisisse la bonne affiche.
+ *
+ * Les vignettes sont presque carrées, les affiches en 16:9. En `object-cover`,
+ * l'image prend la hauteur de la vignette et déborde sur les côtés : sa largeur
+ * affichée vaut la hauteur × 16/9, bien plus que la largeur de la vignette.
+ * Valeurs relevées sur la mise en page, de 360 à 2560 px de large : 61 à 80vw
+ * sur téléphone, environ 49vw sur tablette, 24 à 33vw sur ordinateur.
+ *
+ * C'est la principale cause mesurée du flou signalé : sur un écran à haute
+ * densité (tous les téléphones récents, les écrans Retina), la vignette de
+ * 520 px était agrandie 1,7 à 2 fois par le navigateur. Avec cette annonce, il
+ * prend l'affiche de 960 px dès que l'écran en a besoin, et garde la petite
+ * sur les écrans classiques, où elle suffit.
+ */
+const TAILLES_PETITE_VIGNETTE = '(min-width: 1024px) 32vw, (min-width: 768px) 50vw, 78vw'
+
 const nombreParCategorie = galerie.reduce<Record<string, number>>((total, video) => {
   total[video.categorie] = (total[video.categorie] ?? 0) + 1
   return total
@@ -36,6 +54,10 @@ type VignetteProps = {
  * - Les petites vignettes lisent l'aperçu de 6 s (520 px de large). La grande
  *   lit la vidéo elle-même : l'aperçu, agrandi à sa taille, paraîtrait flou à
  *   côté de son affiche de 960 px.
+ * - Les petites vignettes proposent deux affiches, 520 et 960 px (au moins :
+ *   voir scripts/encoder-video.sh) ; le navigateur prend celle qu'il faut
+ *   pour l'écran (voir TAILLES_PETITE_VIGNETTE). La grande a toujours besoin
+ *   de la plus grande.
  */
 function Vignette({ video, grande, onOuvrir }: VignetteProps) {
   const apercu = useRef<HTMLVideoElement>(null)
@@ -69,6 +91,8 @@ function Vignette({ video, grande, onOuvrir }: VignetteProps) {
     >
       <img
         src={grande ? video.affiche : video.afficheReduite}
+        srcSet={grande ? undefined : `${video.afficheReduite} 520w, ${video.affiche} 960w`}
+        sizes={grande ? undefined : TAILLES_PETITE_VIGNETTE}
         alt={`${video.titre}, à Glorious Hall (Douala)`}
         loading="lazy"
         decoding="async"
@@ -129,6 +153,15 @@ function Vignette({ video, grande, onOuvrir }: VignetteProps) {
  *    compte pas (voir `pause` dans src/lib/steps.ts) ;
  * 2. le contenu s'efface et laisse le logo animé seul à l'écran ;
  * 3. on passe à la section suivante.
+ *
+ * Le contenu s'efface en fondu et en glissant vers le haut, sans flou. Un
+ * filtre `blur()` sur ce bloc plein écran (titre, filtres, cinq images et
+ * leurs vidéos) avait trois défauts : il rendait la galerie floue dès qu'on
+ * commençait à la quitter, d'où l'impression d'une section jamais nette ; il
+ * restait posé au repos sous la forme `blur(0px)`, que les navigateurs
+ * traitent encore comme un filtre (calque à part, que Safari peut adoucir) ;
+ * et il coûtait cher à chaque image de l'animation sur les téléphones
+ * modestes.
  */
 export function Gallery() {
   const ref = useRef<HTMLElement>(null)
@@ -156,7 +189,6 @@ export function Gallery() {
   const arrondi = useTransform(approche, [0.7, 1], ['9rem', '0rem'])
   const opaciteContenu = useTransform(scrollYProgress, [0.1, 0.6], [1, 0])
   const decalageContenu = useTransform(scrollYProgress, [0.1, 0.6], [0, -60])
-  const flouContenu = useTransform(scrollYProgress, [0.1, 0.6], ['blur(0px)', 'blur(12px)'])
   const clicsContenu = useTransform(scrollYProgress, (p) => (p > 0.35 ? 'none' : 'auto'))
   const voile = useTransform(scrollYProgress, [0.1, 0.7], [0.72, 0])
   const echelleFond = useTransform(scrollYProgress, [0, 1], [1.06, 1])
@@ -194,7 +226,7 @@ export function Gallery() {
 
         {/* Contenu : remplit l'écran sous l'en-tête */}
         <motion.div
-          style={{ opacity: opaciteContenu, y: decalageContenu, filter: flouContenu, pointerEvents: clicsContenu }}
+          style={{ opacity: opaciteContenu, y: decalageContenu, pointerEvents: clicsContenu }}
           className="relative flex h-full flex-col page-x pt-[calc(var(--header-h)+0.25rem)] pb-[max(1.25rem,3svh)]"
         >
           <div className="lg:pl-[10vw]">
@@ -212,7 +244,9 @@ export function Gallery() {
               id="galerie-titre"
               data-reveal
               initial={{ opacity: 0, y: 30, filter: 'blur(8px)' }}
-              whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              // Le flou d'entrée est retiré une fois l'apparition finie : un
+              // `blur(0px)` laissé en place garde le titre dans un calque filtré.
+              whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)', transitionEnd: { filter: 'none' } }}
               viewport={{ once: true }}
               transition={{ duration: 0.75, delay: 0.05, ease: EASE }}
               className="mt-2 text-[clamp(1.55rem,min(2.9vw,5svh),2.9rem)] font-bold tracking-[0.03em] text-white lg:pl-[1.5vw]"
