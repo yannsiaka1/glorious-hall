@@ -95,7 +95,10 @@ function Fenetre({ videos, index, onChange }: FenetreProps) {
             autoPlay
             playsInline
             initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
-            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+            // Le flou d'ouverture est retiré une fois l'animation finie : une vidéo
+            // sous filtre, même `blur(0px)`, perd la voie d'affichage directe du
+            // navigateur, et Safari peut la rendre adoucie.
+            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)', transitionEnd: { filter: 'none' } }}
             exit={{ opacity: 0, scale: 1.02 }}
             transition={{ duration: 0.5, ease: EASE }}
             className="pointer-events-auto max-h-[78svh] w-full max-w-[min(92vw,1100px)] rounded-3xl bg-black shadow-2xl"

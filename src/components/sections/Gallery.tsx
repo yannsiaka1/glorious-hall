@@ -153,6 +153,15 @@ function Vignette({ video, grande, onOuvrir }: VignetteProps) {
  *    compte pas (voir `pause` dans src/lib/steps.ts) ;
  * 2. le contenu s'efface et laisse le logo animé seul à l'écran ;
  * 3. on passe à la section suivante.
+ *
+ * Le contenu s'efface en fondu et en glissant vers le haut, sans flou. Un
+ * filtre `blur()` sur ce bloc plein écran (titre, filtres, cinq images et
+ * leurs vidéos) avait trois défauts : il rendait la galerie floue dès qu'on
+ * commençait à la quitter, d'où l'impression d'une section jamais nette ; il
+ * restait posé au repos sous la forme `blur(0px)`, que les navigateurs
+ * traitent encore comme un filtre (calque à part, que Safari peut adoucir) ;
+ * et il coûtait cher à chaque image de l'animation sur les téléphones
+ * modestes.
  */
 export function Gallery() {
   const ref = useRef<HTMLElement>(null)
@@ -180,7 +189,6 @@ export function Gallery() {
   const arrondi = useTransform(approche, [0.7, 1], ['9rem', '0rem'])
   const opaciteContenu = useTransform(scrollYProgress, [0.1, 0.6], [1, 0])
   const decalageContenu = useTransform(scrollYProgress, [0.1, 0.6], [0, -60])
-  const flouContenu = useTransform(scrollYProgress, [0.1, 0.6], ['blur(0px)', 'blur(12px)'])
   const clicsContenu = useTransform(scrollYProgress, (p) => (p > 0.35 ? 'none' : 'auto'))
   const voile = useTransform(scrollYProgress, [0.1, 0.7], [0.72, 0])
   const echelleFond = useTransform(scrollYProgress, [0, 1], [1.06, 1])
@@ -218,7 +226,7 @@ export function Gallery() {
 
         {/* Contenu : remplit l'écran sous l'en-tête */}
         <motion.div
-          style={{ opacity: opaciteContenu, y: decalageContenu, filter: flouContenu, pointerEvents: clicsContenu }}
+          style={{ opacity: opaciteContenu, y: decalageContenu, pointerEvents: clicsContenu }}
           className="relative flex h-full flex-col page-x pt-[calc(var(--header-h)+0.25rem)] pb-[max(1.25rem,3svh)]"
         >
           <div className="lg:pl-[10vw]">
@@ -236,7 +244,9 @@ export function Gallery() {
               id="galerie-titre"
               data-reveal
               initial={{ opacity: 0, y: 30, filter: 'blur(8px)' }}
-              whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              // Le flou d'entrée est retiré une fois l'apparition finie : un
+              // `blur(0px)` laissé en place garde le titre dans un calque filtré.
+              whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)', transitionEnd: { filter: 'none' } }}
               viewport={{ once: true }}
               transition={{ duration: 0.75, delay: 0.05, ease: EASE }}
               className="mt-2 text-[clamp(1.55rem,min(2.9vw,5svh),2.9rem)] font-bold tracking-[0.03em] text-white lg:pl-[1.5vw]"
